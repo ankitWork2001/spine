@@ -117,7 +117,7 @@ export const getDashboardStats = async (req, res) => {
 export const toggleUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body; // status can be "active" or "banned"
+    const { status } = req.body;
     const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });

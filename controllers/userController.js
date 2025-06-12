@@ -1,5 +1,6 @@
 import User from "../models/userModel.js";
 import Wallet from "../models/walletModel.js";
+
 export const getEmployeeById = async (req, res) => {
   try {
     const { employeeId } = req.params;

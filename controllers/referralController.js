@@ -83,7 +83,7 @@ export const giveReferral = async (req, res) => {
 
     if (level2Referral) {
       await Referral.create({
-        referrerId: level2Referral.referrerId,
+        referrerId: level2Referral.referredBy,
         referredId: userId,
         level: 2,
         commissionPercent: 5
@@ -91,13 +91,13 @@ export const giveReferral = async (req, res) => {
 
       // Level 3: Get the referrer of level 2 referrer
       const level3Referral = await Referral.findOne({
-        referredId: level2Referral.referrerId,
+        referredId: level2Referral.referredBy,
         level: 1
       });
 
       if (level3Referral) {
         await Referral.create({
-          referrerId: level3Referral.referrerId,
+          referrerId: level3Referral.referredBy,
           referredId: userId,
           level: 3,
           commissionPercent: 2.5
@@ -115,11 +115,11 @@ export const giveReferral = async (req, res) => {
 
 export const getReferralTree = async (req, res) => {
   try {
-    const userId=req.userId;
+    const userId = req.userId;
     const referralTree=await Referral.find({referrerId:userId})
     .populate("referredId","name username email mobile role")
     .exec();
-    if(!referralTree || referralTree.length===0){
+    if(!referralTree || referralTree.length === 0){
       res.status(200).json({ success: true, message: "Not Referred Yet" });
     }
     res.status(200).json({ success: true, message: "Referral tree fetched",referralTree });

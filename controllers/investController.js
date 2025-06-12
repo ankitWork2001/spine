@@ -1,13 +1,20 @@
 import InvestmentPlan from "../models/investmentPlanModel.js";
 import UserInvestment from "../models/userInvestmentModel.js";
 import Wallet from "../models/walletModel.js";
+import Referral from "../models/referralModel.js";
+import RewardWallet from "../models/rewardWallet.js";
+
 export const getInvestmentPlans = async (req, res) => {
   try {
-    const plans=await InvestmentPlan.find();
+    const plans = await InvestmentPlan.find();
     if (!plans || plans.length === 0) {
-      return res.status(404).json({ success: false, message: "No investment plans found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "No investment plans found" });
     }
-    res.status(200).json({ success: true, message: "Plans fetched successfully", plans });
+    res
+      .status(200)
+      .json({ success: true, message: "Plans fetched successfully", plans });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -17,51 +24,93 @@ export const subscribeInvestment = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { amount,startDate,endDate,status,lastPayoutDate } = req.body;
+    const { amount } = req.body;
+
     const userWallet = await Wallet.findOne({ userId });
     if (!userWallet) {
       return res.status(404).json({ success: false, message: "User wallet not found" });
     }
-    // Find the investment plan by ID
+
     const plan = await InvestmentPlan.findById(id);
-    if (!plan || plan.minAmount > amount || userWallet.balance < amount) {
-      return res.status(404).json({ success: false, message: "Investment plan not found or minimum amount not met or insufficient balance" });
+    if (!plan || amount < plan.minAmount || userWallet.balance < amount) {
+      return res.status(400).json({ success: false, message: "Invalid plan or insufficient balance" });
     }
 
-    // Deduct the investment amount from the user's wallet
+    // Lock the investment amount for the plan duration
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(startDate.getDate() + plan.durationDays);
+
     userWallet.balance -= amount;
+    userWallet.lockedBalance += amount;
     await userWallet.save();
-    // Update the user's wallet balance
-    
-    // Create a new user investment
+
     const userInvestment = await UserInvestment.create({
       userId,
       planId: id,
       amount,
       startDate,
       endDate,
-      status : status || "active",
-      lastPayoutDate : lastPayoutDate || null
+      status: "active",
+      lastPayoutDate: null,
     });
 
-    res.status(201).json({ success: true, message: "Subscribed successfully", investment: userInvestment , userWallet});
+    // 💸 Referral reward logic - 10% of amount goes to RewardWallet
+    const referral = await Referral.findOne({
+      referredUser: userId,
+      level: 1,
+      isCommissionGiven: { $ne: true },
+    });
+
+    if (referral) {
+      const referrerId = referral.referredBy;
+      const rewardAmount = amount * 0.1;
+
+      let refRewardWallet = await RewardWallet.findOne({ userId: referrerId });
+      if (!refRewardWallet) {
+        refRewardWallet = new RewardWallet({ userId: referrerId, rewardBalance: rewardAmount });
+      } else {
+        refRewardWallet.rewardBalance += rewardAmount;
+      }
+      await refRewardWallet.save();
+
+      referral.isCommissionGiven = true;
+      await referral.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Subscribed successfully. Amount locked.",
+      investment: userInvestment,
+      userWallet,
+    });
   } catch (error) {
+    console.error("Error in subscribeInvestment:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
-export const getSubscriptionsbyId = async (req,res) => {
+export const getSubscriptionsbyId = async (req, res) => {
   try {
     const id = req.params.id;
-    const user =await UserInvestment.findById(id)
-    .populate("userId", "name email role status")
-    .populate("planId", "name roiPercent minAmount durationDays autoPayout").exec();
+    const user = await UserInvestment.findById(id)
+      .populate("userId", "name email role status")
+      .populate("planId", "name roiPercent minAmount durationDays autoPayout")
+      .exec();
     const plan = await InvestmentPlan.findById(user.planId);
-    const userWallet = await Wallet.findOne({ userId : user.userId });
-    if(!user){ 
-      return res.status(404).json({ success: false, message: "Investment plans not found" });
+    const userWallet = await Wallet.findOne({ userId: user.userId });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Investment plans not found" });
     }
-    res.status(201).json({ success: true, message: "User retrived successfully", userDetails: user, userWallet});
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "User retrived successfully",
+        userDetails: user,
+        userWallet,
+      });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -69,11 +118,17 @@ export const getSubscriptionsbyId = async (req,res) => {
 
 export const getActiveInvestments = async (req, res) => {
   try {
-    const userId= req.userId;
+    const userId = req.userId;
     const investments = await UserInvestment.find({ userId, status: "active" })
       .populate("planId", "name roiPercent minAmount durationDays autoPayout")
       .exec();
-    res.status(200).json({ success: true, message: "Active investments fetched", investments });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Active investments fetched",
+        investments,
+      });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -85,7 +140,13 @@ export const getInvestmentHistory = async (req, res) => {
     const investments = await UserInvestment.find({ userId })
       .populate("planId", "name roiPercent minAmount durationDays autoPayout")
       .exec();
-    res.status(200).json({ success: true, message: "Investment history fetched", investments });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Investment history fetched",
+        investments,
+      });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

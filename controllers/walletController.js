@@ -32,12 +32,14 @@ export const getTransactions = async (req, res) => {
 
 export const depositFunds = async (req, res) => {
   try {
-    const userId=req.userId
-    const {amount}=req.body
+    const userId = req.userId;
+    const { amount } = req.body;
+
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       return res.status(404).json({ success: false, message: "Wallet not found" });
     }
+
     wallet.balance += amount;
     await wallet.save();
 
@@ -45,37 +47,32 @@ export const depositFunds = async (req, res) => {
       userId,
       type: "deposit",
       amount,
-      status: "pending"
+      status: "pending",
     });
 
-    const referral = await Referral.findOne({ referredId: userId, level: 1 });
+    // Check for a referral and apply 10% commission only once
+    const referral = await Referral.findOne({
+      referredUser: userId,
+      isCommissionGiven: false
+    });
+
     if (referral) {
-      const referrer = await Wallet.findOne({ userId: referral.referrerId });
-      if (referrer) {
-        referrer.commission += amount * 0.1; // Assuming 10% commission
-        await referrer.save();
-      }
-    }
-    // do the same for level 2 and level 3
-    const referralLvl2 = await Referral.findOne({ referredId: userId, level: 2 });
-    if (referralLvl2) {
-      const referrerLvl2 = await Wallet.findOne({ userId: referralLvl2.referrerId });
-      if (referrerLvl2) {
-        referrerLvl2.commission += amount * 0.05; // Assuming 5% commission
-        await referrerLvl2.save();
+      const referrerWallet = await Wallet.findOne({ userId: referral.referredBy });
+      if (referrerWallet) {
+        const commission = amount * 0.1;
+        referrerWallet.commission += commission;
+        await referrerWallet.save();
+
+        referral.isCommissionGiven = true; // Mark commission as given
+        await referral.save();
       }
     }
 
-    const referralLvl3 = await Referral.findOne({ referredId: userId, level: 3 });
-    if (referralLvl3) {
-      const referrerLvl3 = await Wallet.findOne({ userId: referralLvl3.referrerId });
-      if (referrerLvl3) {
-        referrerLvl3.commission += amount * 0.02; // Assuming 2% commission
-        await referrerLvl3.save();
-      }
-    }
-
-    res.status(200).json({ success: true, message: "Deposit successful", wallet });
+    res.status(200).json({
+      success: true,
+      message: "Deposit successful",
+      wallet,
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -83,19 +80,33 @@ export const depositFunds = async (req, res) => {
 
 export const withdrawFunds = async (req, res) => {
   try {
-    const userId=req.userId
-    const {amount}=req.body;
-    const Plan = await UserInvestment.findOne({userId});
+    const userId = req.userId;
+    const { amount } = req.body;
+
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       return res.status(404).json({ success: false, message: "Wallet not found" });
     }
-    if(Plan.status === "active"){
-      return res.status(404).json({ success: false, message: "You can't withdraw until you plan is active" });   
+
+    const plan = await UserInvestment.findOne({ userId });
+
+    let availableBalance = wallet.balance;
+
+    if (plan && plan.status === "active") {
+      availableBalance = wallet.balance - plan.lockedAmount;
     }
-    if (wallet.balance < amount || amount <= 100) {
-      return res.status(400).json({ success: false, message: "Insufficient balance or Minimum withdrawal is > 100" });
+
+    if (amount <= 100) {
+      return res.status(400).json({ success: false, message: "Minimum withdrawal is ₹100" });
     }
+
+    if (availableBalance < amount) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Insufficient withdrawable balance. You can withdraw up to ₹${availableBalance}` 
+      });
+    }
+
     wallet.balance -= amount;
     await wallet.save();
 
@@ -105,7 +116,13 @@ export const withdrawFunds = async (req, res) => {
       amount,
       status: "pending"
     });
-    res.status(200).json({ success: true, message: "Withdrawal successful", wallet });
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Withdrawal successful", 
+      wallet 
+    });
+
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
