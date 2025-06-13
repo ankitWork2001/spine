@@ -1,6 +1,7 @@
 import express from 'express';
 import connectDB from './config/db.js';
 import cors from 'cors';
+import './config/cron.js'
 
 import notificationRoutes from "./routes/notificationRoutes.js";
 import authRoutes from './routes/authRoutes.js';

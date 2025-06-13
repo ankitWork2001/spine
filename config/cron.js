@@ -5,7 +5,7 @@ import InvestmentPlan from '../models/investmentPlanModel.js';
 import Notification from '../models/notificationModel.js';
 
 // Runs every day at midnight
-cron.schedule('0 0 * * *', async () => {
+cron.schedule('*/1 * * * *', async () => {
   console.log('🔁 Running Auto Payout Job...');
 
   try {
