@@ -12,6 +12,13 @@ export const signup = async (req, res) => {
       return res.status(400).json({ success: false, message: "User already exists" });
     }
 
+    if (role === 'admin') {
+      const existingAdmin = await User.findOne({ role: 'admin' });
+      if (existingAdmin) {
+        return res.status(400).json({ error: 'An admin already exists. Only one admin is allowed.' });
+      }
+    }
+    
     const code = Math.floor(100000 + Math.random() * 900000).toString(); // Unique referral code
     const newUser = await User.create({
       name,

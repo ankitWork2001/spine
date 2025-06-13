@@ -16,5 +16,4 @@ const rewardWalletSchema = new Schema({
 });
 
 const RewardWallet = mongoose.model("RewardWallet", rewardWalletSchema);
-
 export default RewardWallet;

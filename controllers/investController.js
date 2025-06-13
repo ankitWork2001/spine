@@ -2,7 +2,7 @@ import InvestmentPlan from "../models/investmentPlanModel.js";
 import UserInvestment from "../models/userInvestmentModel.js";
 import Wallet from "../models/walletModel.js";
 import Referral from "../models/referralModel.js";
-import RewardWallet from "../models/rewardWallet.js";
+import RewardWallet from "../models/rewardWalletModel.js";
 
 export const getInvestmentPlans = async (req, res) => {
   try {
@@ -26,7 +26,11 @@ export const subscribeInvestment = async (req, res) => {
     const userId = req.userId;
     const { amount } = req.body;
 
-    const userWallet = await Wallet.findOne({ userId });
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+  return res.status(400).json({ success: false, message: "Invalid amount" });
+}
+
+const userWallet = await Wallet.findOne({ userId });
     if (!userWallet) {
       return res.status(404).json({ success: false, message: "User wallet not found" });
     }
@@ -78,7 +82,7 @@ export const subscribeInvestment = async (req, res) => {
       await referral.save();
     }
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: "Subscribed successfully. Amount locked.",
       investment: userInvestment,
@@ -91,18 +95,16 @@ export const subscribeInvestment = async (req, res) => {
 };
 export const getSubscriptionsbyId = async (req, res) => {
   try {
-    const id = req.params.id;
-    const user = await UserInvestment.findById(id)
-      .populate("userId", "name email role status")
-      .populate("planId", "name roiPercent minAmount durationDays autoPayout")
-      .exec();
-    const plan = await InvestmentPlan.findById(user.planId);
-    const userWallet = await Wallet.findOne({ userId: user.userId });
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Investment plans not found" });
-    }
+   const user = await UserInvestment.findById(id)
+  .populate("userId", "name email role status")
+  .populate("planId", "name roiPercent minAmount durationDays autoPayout");
+
+if (!user) {
+  return res.status(404).json({ success: false, message: "Investment plan not found" });
+}
+
+const userWallet = await Wallet.findOne({ userId: user.userId });
+
     res
       .status(201)
       .json({

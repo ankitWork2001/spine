@@ -34,7 +34,7 @@ export const createInvestmentPlan = async (req, res) => {
 export const getAllInvestmentPlans = async (req, res) => {
   try {
     const plans = await InvestmentPlan.find().sort({ createdAt: -1 }); // Sort by latest first
-    if(!plans){
+    if(plans.length === 0){
       return res.status(400).json({ success: false, message: "Investment plan not found" });
     }
     res.status(200).json({ success: true, data: plans });
@@ -47,7 +47,7 @@ export const getAllUserInvestments = async (req,res) => {
   try {
     const investments = await UserInvestment.find()
                         .populate('planId', 'name roiPercent' );
-    if(!investments){
+    if(investments.length === 0){
       return res.status(400).json({ success: false, message: " No user had Investment plan" });
     }
     res.status(200).json({ success: true, investments });
@@ -297,7 +297,6 @@ export const updateInvestmentPlan = async (req, res) => {
       message: "Investment plan updated successfully",
       data: plan
     });
-    res.status(200).json({ success: true, message: "Investment plan updated successfully" });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -323,8 +322,8 @@ export const getSpinLogs = async (req, res) => {
 export const getReferralStats = async (req, res) => {
   try {
     const referrals = await Referral.find()
-      .populate("referrerId", "name email")
-      .populate("referredId", "name email")
+      .populate("referredBy", "name email")
+      .populate("referredUser", "name email")
       .exec();
     res.status(200).json({ success: true, referrals });
   } catch (error) {
