@@ -11,7 +11,7 @@ import referralRoutes from './routes/referralRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import investRoutes from './routes/investRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-import RewardRoutes from './routes/rewardRoutes.js';
+import rewardRoutes from './routes/rewardRoutes.js';
 
 import 'dotenv/config';
 const app = express();
@@ -41,7 +41,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/invest', investRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notification', notificationRoutes);
-app.use('/api/reward', RewardRoutes);
+app.use('/api/reward', rewardRoutes);
 
 app.use((req, res, next) => {
     res.status(404).json({ message: 'Route not found' });

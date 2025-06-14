@@ -3,11 +3,13 @@ import { authenticate } from "../middleware/authMiddleware.js";
 import {
   getAllReferral,
   getReferralCode,
-  getReferralCommissions,
   getReferralTree,
+  getMyReferralOutflow,
+  getReferralIncomeDetails,
   giveReferral,
   getReferralSummary,      
-  getReferralsByUserId      // OPTIONAL - admin
+  getReferralsByUserId,
+  getMyReferralUsedInfo
 } from "../controllers/referralController.js";
 
 const router = Router();
@@ -16,8 +18,16 @@ router.get("/", getAllReferral); // Admin
 router.get("/code", authenticate, getReferralCode);
 router.post("/refer", authenticate, giveReferral);
 router.get("/tree", authenticate, getReferralTree);
-router.get("/commissions", authenticate, getReferralCommissions);
 router.get("/summary", authenticate, getReferralSummary);        // ✅ NEW
-router.get("/user/:userId", getReferralsByUserId);               // Optional
+router.get("/user/:userId", authenticate ,getReferralsByUserId);
+router.get("/Outflow", authenticate, getMyReferralOutflow);
+
+// in rewardRoutes.js or referralRoutes.js
+
+router.get("/referral-income", authenticate, getReferralIncomeDetails);
+router.get("/my-referral-used",authenticate, getMyReferralUsedInfo);
+
+
+
 
 export default router;

@@ -18,7 +18,7 @@ const transactionSchema = new Schema({
     status:{
         type:String,
         enum:["pending","completed","failed"],
-        default:"pending"
+        default:"completed"
     }
 },{
     timestamps:true

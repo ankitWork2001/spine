@@ -3,6 +3,7 @@ import UserInvestment from "../models/userInvestmentModel.js";
 import Wallet from "../models/walletModel.js";
 import Referral from "../models/referralModel.js";
 import RewardWallet from "../models/rewardWalletModel.js";
+import ReferralTransaction from "../models/referralTransactionModel.js";
 
 export const getInvestmentPlans = async (req, res) => {
   try {
@@ -27,10 +28,10 @@ export const subscribeInvestment = async (req, res) => {
     const { amount } = req.body;
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
-  return res.status(400).json({ success: false, message: "Invalid amount" });
-}
+      return res.status(400).json({ success: false, message: "Invalid amount" });
+    }
 
-const userWallet = await Wallet.findOne({ userId });
+    const userWallet = await Wallet.findOne({ userId });
     if (!userWallet) {
       return res.status(404).json({ success: false, message: "User wallet not found" });
     }
@@ -40,7 +41,6 @@ const userWallet = await Wallet.findOne({ userId });
       return res.status(400).json({ success: false, message: "Invalid plan or insufficient balance" });
     }
 
-    // Lock the investment amount for the plan duration
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(startDate.getDate() + plan.durationDays);
@@ -59,11 +59,10 @@ const userWallet = await Wallet.findOne({ userId });
       lastPayoutDate: null,
     });
 
-    // 💸 Referral reward logic - 10% of amount goes to RewardWallet
+    // ✅ Referral reward logic
     const referral = await Referral.findOne({
       referredUser: userId,
-      level: 1,
-      isCommissionGiven: { $ne: true },
+      isCommissionGiven: false,
     });
 
     if (referral) {
@@ -72,14 +71,24 @@ const userWallet = await Wallet.findOne({ userId });
 
       let refRewardWallet = await RewardWallet.findOne({ userId: referrerId });
       if (!refRewardWallet) {
-        refRewardWallet = new RewardWallet({ userId: referrerId, rewardBalance: rewardAmount });
+        refRewardWallet = await RewardWallet.create({
+          userId: referrerId,
+          rewardBalance: rewardAmount,
+        });
       } else {
         refRewardWallet.rewardBalance += rewardAmount;
+        await refRewardWallet.save();
       }
-      await refRewardWallet.save();
 
       referral.isCommissionGiven = true;
       await referral.save();
+
+      await ReferralTransaction.create({
+        referrerId,
+        referredUserId: userId,
+        investmentId: userInvestment._id,
+        amount: rewardAmount,
+      });
     }
 
     res.status(200).json({
@@ -93,7 +102,10 @@ const userWallet = await Wallet.findOne({ userId });
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+
 export const getSubscriptionsbyId = async (req, res) => {
+  const { id } = req.params;
   try {
    const user = await UserInvestment.findById(id)
   .populate("userId", "name email role status")

@@ -2,6 +2,7 @@ import User from "../models/userModel.js";
 import Wallet from "../models/walletModel.js";
 import Spin from "../models/spinModel.js";
 import Transaction from "../models/transactionModel.js";
+import RewardWallet from "../models/rewardWalletModel.js";
 
 const SPIN_PRICE = 1;
 
@@ -36,17 +37,20 @@ export const purchaseSpin = async (req, res) => {
 
     
 
-        res.status(200).json({
-            success: true,
-            message: `Successfully purchased ${spinCount} spin(s).`,
-            updatedSpinCount: user.spinCount,
-            remainingBalance: userWallet.balance
-        });
+      res.status(200).json({
+    success: true,
+    message: `Successfully purchased ${spinCount} spin(s).`,
+    updatedSpinCount: user.spinCount,
+    remainingBalance: userWallet.balance
+});
     } catch (error) {
         console.error('❌ Error in purchaseSpin:', error);
         res.status(500).json({ success: false, error: "Internal Server Error" });
     }
 };
+
+
+
 
 export const playSpin = async (req, res) => {
   try {
@@ -87,14 +91,14 @@ export const playSpin = async (req, res) => {
     user.totalSpinPlayed += 1;
     await user.save();
 
-    // Update wallet
-    const userWallet = await Wallet.findOne({ userId });
-    if (!userWallet) {
+    // Update Rewardwallet
+    const UserReward = await RewardWallet.findOne({ userId });
+    if (!UserReward) {
       return res.status(404).json({ success: false, message: "User wallet not found" });
     }
 
-    userWallet.balance += spinValue;
-    await userWallet.save();
+    UserReward.rewardBalance += spinValue;
+    await UserReward.save();
 
     // Create transaction only if spinValue > 0
     if (spinValue > 0) {
@@ -112,14 +116,17 @@ export const playSpin = async (req, res) => {
       success: true,
       message: "Spin played successfully",
       spin,
-      userData,
-      userWallet
+     UserReward,
+      
     });
 
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+
+
 
 export const getSpinLogs = async (req, res) => {
   try {
