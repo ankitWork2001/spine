@@ -1,30 +1,38 @@
-import mongoose,{Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const investmentPlanSchema = new Schema({
-    name:{
-        type:String,
-        required:true
+const investmentPlanSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
     },
-    roiPercent:{
-        type:Number,
-        required:true
+    amount: {
+      type: Number,
     },
-    minAmount:{
-        type:Number,
-        required:true
+    roiPercent: {
+      type: Number,
+      required: true,
     },
-    durationDays:{
-        type:Number,
-        required:true
+    minAmount: {
+      type: Number,
+      required: true,
     },
-    autoPayout:{
-        type:Boolean,
-        default:false
+    durationDays: {
+      type: Number,
+      required: true,
     },
-},{
-    timestamps:true
-});
+    autoPayout: {
+      type: Boolean,
+      default: false,
+    },
+    rewardPercent: {
+      type: Number,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-const InvestmentPlan = mongoose.model("InvestmentPlan",investmentPlanSchema);
-
+const InvestmentPlan = mongoose.model("InvestmentPlan", investmentPlanSchema);
 export default InvestmentPlan;

@@ -1,10 +1,15 @@
 import { Router } from "express";
-import { getRewardWallet,getRewardHistory } from "../controllers/rewardController.js";
-import { authenticate } from '../middleware/authMiddleware.js';
+import {
+  getRewardWallet,
+  getRewardHistory,
+  getReferralIncomeDetails
+} from "../controllers/rewardController.js";
+import { authenticate } from "../middleware/authMiddleware.js";
+
 const router = Router();
 
-router.get('/getreward', authenticate ,getRewardWallet);
+router.get("/getreward", authenticate, getRewardWallet);
 router.get("/history", authenticate, getRewardHistory);
-
+router.get("/referral-income", authenticate, getReferralIncomeDetails); // 🆕 Added missing route
 
 export default router;

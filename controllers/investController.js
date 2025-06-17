@@ -23,32 +23,34 @@ export const getInvestmentPlans = async (req, res) => {
 
 export const subscribeInvestment = async (req, res) => {
   try {
-    const { id } = req.params;
-    const userId = req.userId;
+    const { id } = req.params; // planId
     const { amount } = req.body;
+    const userId = req.userId;
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       return res.status(400).json({ success: false, message: "Invalid amount" });
     }
 
+    // Fetch user wallet
     const userWallet = await Wallet.findOne({ userId });
-    if (!userWallet) {
-      return res.status(404).json({ success: false, message: "User wallet not found" });
-    }
+    if (!userWallet) return res.status(404).json({ success: false, message: "User wallet not found" });
 
+    // Fetch investment plan
     const plan = await InvestmentPlan.findById(id);
-    if (!plan || amount < plan.minAmount || userWallet.balance < amount) {
-      return res.status(400).json({ success: false, message: "Invalid plan or insufficient balance" });
-    }
+    if (!plan) return res.status(404).json({ success: false, message: "Investment plan not found" });
+    if (amount < plan.minAmount) return res.status(400).json({ success: false, message: "Amount less than minimum required" });
+    if (userWallet.balance < amount) return res.status(400).json({ success: false, message: "Insufficient balance" });
 
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(startDate.getDate() + plan.durationDays);
-
+    // Deduct amount & lock it
     userWallet.balance -= amount;
     userWallet.lockedBalance += amount;
     await userWallet.save();
 
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + plan.durationDays);
+
+    // Create Investment
     const userInvestment = await UserInvestment.create({
       userId,
       planId: id,
@@ -59,28 +61,34 @@ export const subscribeInvestment = async (req, res) => {
       lastPayoutDate: null,
     });
 
-    // ✅ Referral reward logic
-    const referral = await Referral.findOne({
-      referredUser: userId,
-      isCommissionGiven: false,
-    });
+    // Referral Reward Logic
+    const referral = await Referral.findOne({ referredUser: userId, isCommissionGiven: false });
 
     if (referral) {
-      const referrerId = referral.referredBy;
       const rewardAmount = amount * 0.1;
+      const referrerId = referral.referredBy;
 
+      // Update Referrer's Reward Wallet
       let refRewardWallet = await RewardWallet.findOne({ userId: referrerId });
       if (!refRewardWallet) {
-        refRewardWallet = await RewardWallet.create({
-          userId: referrerId,
-          rewardBalance: rewardAmount,
-        });
+        refRewardWallet = await RewardWallet.create({ userId: referrerId, rewardBalance: rewardAmount });
       } else {
         refRewardWallet.rewardBalance += rewardAmount;
         await refRewardWallet.save();
       }
 
+      // Optional: reward referred user (first-time investor)
+      let userRewardWallet = await RewardWallet.findOne({ userId });
+      if (!userRewardWallet) {
+        userRewardWallet = await RewardWallet.create({ userId, rewardBalance: rewardAmount });
+      } else {
+        userRewardWallet.rewardBalance += rewardAmount;
+        await userRewardWallet.save();
+      }
+
+      // Mark referral used and log transaction
       referral.isCommissionGiven = true;
+      referral.amount = rewardAmount;
       await referral.save();
 
       await ReferralTransaction.create({
@@ -93,16 +101,16 @@ export const subscribeInvestment = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Subscribed successfully. Amount locked.",
+      message: "Investment successful. Amount locked.",
       investment: userInvestment,
-      userWallet,
+      wallet: userWallet,
     });
+
   } catch (error) {
     console.error("Error in subscribeInvestment:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 export const getSubscriptionsbyId = async (req, res) => {
   const { id } = req.params;
