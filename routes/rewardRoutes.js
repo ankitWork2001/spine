@@ -10,6 +10,6 @@ const router = Router();
 
 router.get("/getreward", authenticate, getRewardWallet);
 router.get("/history", authenticate, getRewardHistory);
-router.get("/referral-income", authenticate, getReferralIncomeDetails); // 🆕 Added missing route
+router.get("/referral-income", authenticate, getReferralIncomeDetails);
 
 export default router;

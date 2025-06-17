@@ -88,6 +88,7 @@ export const subscribeInvestment = async (req, res) => {
 
       // Mark referral used and log transaction
       referral.isCommissionGiven = true;
+      referral.isRewardGiven = true;
       referral.amount = rewardAmount;
       await referral.save();
 
