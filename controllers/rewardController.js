@@ -15,7 +15,8 @@ export const getRewardWallet = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Reward wallet fetched",
-      rewardBalance: wallet.rewardBalance,
+      rewardBalance: wallet.balance,
+      rewardhistory: wallet.transactions
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
