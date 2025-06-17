@@ -12,7 +12,7 @@ import {
 const router = Router();
 
 // Public
-router.get("/plans", getInvestmentPlans);
+router.get("/plans",authenticate ,getInvestmentPlans);
 
 // Authenticated
 router.post("/subscribe/:id", authenticate, subscribeInvestment);
