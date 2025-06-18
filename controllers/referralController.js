@@ -17,62 +17,7 @@ export const getReferralCode = async (req, res) => {
   }
 };
 
-// ✅ Give Referral (at signup or later)
-export const giveReferral = async (req, res) => {
-  try {
-    const { referralCode } = req.body;
-    const userId = req.userId;
 
-    const alreadyUsed = await Referral.findOne({ referredUser: userId });
-    if (alreadyUsed) {
-      return res.status(400).json({ success: false, message: "Referral already used." });
-    }
-
-    const referrer = await User.findOne({ code: referralCode });
-    if (!referrer || referrer._id.toString() === userId.toString()) {
-      return res.status(400).json({ success: false, message: "Invalid referral code." });
-    }
-
-    await Referral.create({
-      referredBy: referrer._id,
-      referredUser: userId,
-      commissionPercent: 10,
-    });
-
-    await Spin.create([
-      { resultValue: 0, type: "free", userId: referrer._id },
-      { resultValue: 0, type: "free", userId },
-    ]);
-
-    referrer.spinCount = (referrer.spinCount || 0) + 1;
-    await referrer.save();
-
-    const referredUser = await User.findById(userId);
-    referredUser.spinCount = (referredUser.spinCount || 0) + 1;
-    await referredUser.save();
-
-    res.status(200).json({ success: true, message: "Referral successfully recorded." });
-  } catch (error) {
-    console.error("Referral Error:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-// ✅ Referral Status (Sent + Received)
-export const getReferralStatus = async (req, res) => {
-  try {
-    const userId = req.userId;
-
-    const sent = await Referral.find({ referredBy: userId }).populate("referredUser", "name email");
-    const received = await Referral.findOne({ referredUser: userId })
-      .populate("referredBy", "name email")
-      .populate("referredUser", "name email");
-
-    res.status(200).json({ sent, received });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
 // ✅ Referral Tree
 export const getReferralTree = async (req, res) => {
@@ -125,25 +70,6 @@ export const getAllReferral = async (req, res) => {
   }
 };
 
-// ✅ Referrals by User ID (Admin)
-export const getReferralsByUserId = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const referrals = await Referral.find({ referredBy: userId })
-      .populate("referredUser", "name email username createdAt")
-      .sort({ createdAt: -1 });
-
-    if (!referrals || referrals.length === 0) {
-      return res.status(404).json({ success: false, message: "No users found referred by this user" });
-    }
-
-    res.status(200).json({ success: true, message: "Referrals fetched", referrals });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
 // ✅ My Referral Used Info
 export const getMyReferralUsedInfo = async (req, res) => {
   try {
@@ -171,23 +97,6 @@ export const getMyReferralUsedInfo = async (req, res) => {
       }
     });
 
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-
-
-// ✅ Outflow: My earnings history
-export const getMyReferralOutflow = async (req, res) => {
-  try {
-    const userId = req.userId;
-
-    const records = await ReferralTransaction.find({ referredUserId: userId })
-      .populate("referrerId", "name email")
-      .sort({ date: -1 });
-
-    res.status(200).json({ success: true, message: "Referral outflow history", data: records });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

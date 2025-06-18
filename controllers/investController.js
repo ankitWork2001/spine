@@ -65,39 +65,58 @@ export const subscribeInvestment = async (req, res) => {
     const referral = await Referral.findOne({ referredUser: userId, isCommissionGiven: false });
 
     if (referral) {
-      const rewardAmount = amount * 0.1;
-      const referrerId = referral.referredBy;
+     const rewardAmount = amount * 0.1;
+const referrerId = referral.referredBy;
 
-      // Update Referrer's Reward Wallet
-      let refRewardWallet = await RewardWallet.findOne({ userId: referrerId });
-      if (!refRewardWallet) {
-        refRewardWallet = await RewardWallet.create({ userId: referrerId, rewardBalance: rewardAmount });
-      } else {
-        refRewardWallet.rewardBalance += rewardAmount;
-        await refRewardWallet.save();
-      }
+// Update Referrer's Reward Wallet
+let refRewardWallet = await RewardWallet.findOne({ userId: referrerId });
+if (!refRewardWallet) {
+  refRewardWallet = await RewardWallet.create({ userId: referrerId, balance: rewardAmount, transactions: [{
+    type: "credit",
+    amount: rewardAmount,
+    reason: "Referral commission",
+  }]});
+} else {
+  refRewardWallet.balance += rewardAmount;
+  refRewardWallet.transactions.push({
+    type: "credit",
+    amount: rewardAmount,
+    reason: "Referral commission",
+  });
+  await refRewardWallet.save();
+}
 
-      // Optional: reward referred user (first-time investor)
-      let userRewardWallet = await RewardWallet.findOne({ userId });
-      if (!userRewardWallet) {
-        userRewardWallet = await RewardWallet.create({ userId, rewardBalance: rewardAmount });
-      } else {
-        userRewardWallet.rewardBalance += rewardAmount;
-        await userRewardWallet.save();
-      }
+// Optional: reward referred user (first-time investor)
+let userRewardWallet = await RewardWallet.findOne({ userId });
+if (!userRewardWallet) {
+  userRewardWallet = await RewardWallet.create({ userId, balance: rewardAmount, transactions: [{
+    type: "credit",
+    amount: rewardAmount,
+    reason: "Joining bonus",
+  }]});
+} else {
+  userRewardWallet.balance += rewardAmount;
+  userRewardWallet.transactions.push({
+    type: "credit",
+    amount: rewardAmount,
+    reason: "Joining bonus",
+  });
+  await userRewardWallet.save();
+}
 
-      // Mark referral used and log transaction
-      referral.isCommissionGiven = true;
-      referral.isRewardGiven = true;
-      referral.amount = rewardAmount;
-      await referral.save();
+// Mark referral as used and log the transaction
+referral.isCommissionGiven = true;
+referral.isRewardGiven = true;
+referral.amount = rewardAmount;
+await referral.save();
 
-      await ReferralTransaction.create({
-        referrerId,
-        referredUserId: userId,
-        investmentId: userInvestment._id,
-        amount: rewardAmount,
-      });
+await ReferralTransaction.create({
+  referrerId,
+  referredUserId: userId,
+  investmentId: userInvestment._id,
+  amount: rewardAmount,
+});
+
     }
 
     res.status(200).json({
