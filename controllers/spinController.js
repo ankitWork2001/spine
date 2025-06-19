@@ -55,7 +55,7 @@ export const purchaseSpin = async (req, res) => {
 export const playSpin = async (req, res) => {
   try {
     const userId = req.userId;
-    const { spinType } = req.body;
+    // const { spinType } = req.body;
 
     const user = await User.findById(userId);
     if (!user || user.spinCount <= 0) {
