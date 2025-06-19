@@ -80,3 +80,35 @@ const activeInvestors = await ReferralTransaction.find({
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+// ✅ Referral Bonus History - Users who gave me referral bonus
+export const getReferralBonusHistory = async (req, res) => {
+  try {
+    const userId = req.userId; // This is the referrer
+
+    const transactions = await ReferralTransaction.find({ referrerId: userId })
+      .populate("referredUserId", "name")
+      .sort({ date: -1 });
+
+    const data = transactions.map(tx => ({
+      name: tx.referredUserId?.name || "Unknown",
+      date: tx.date,
+      amount: tx.amount,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: "Referral bonus history fetched",
+      data,
+    });
+
+  } catch (error) {
+    console.error("Error in getReferralBonusHistory:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch referral bonus history",
+      error: error.message,
+    });
+  }
+};
