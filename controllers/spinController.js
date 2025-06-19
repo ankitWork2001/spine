@@ -83,7 +83,8 @@ export const playSpin = async (req, res) => {
     const spin = await Spin.create({
       userId,
       resultValue: spinValue,
-      type: spinType || "free",
+      // type: spinType || "free",
+        
     });
 
     // Update user spins
