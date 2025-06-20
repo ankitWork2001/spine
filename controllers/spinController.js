@@ -9,7 +9,7 @@ const SPIN_PRICE = 1;
 export const purchaseSpin = async (req, res) => {
     try {
         const userId = req.userId;
-        // let { spinCount } = req.body;
+        let { spinCount } = req.body;
 
         spinCount = Number(spinCount);
 
