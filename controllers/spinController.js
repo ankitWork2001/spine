@@ -55,7 +55,7 @@ export const purchaseSpin = async (req, res) => {
 export const playSpin = async (req, res) => {
   try {
     const userId = req.userId;
-    const { spinType } = req.body;
+    
 
     const user = await User.findById(userId);
     if (!user || user.spinCount <= 0) {
@@ -83,7 +83,6 @@ export const playSpin = async (req, res) => {
     const spin = await Spin.create({
       userId,
       resultValue: spinValue,
-      type: spinType || "free",
     });
 
     // Update user spins
@@ -117,7 +116,20 @@ export const playSpin = async (req, res) => {
       message: "Spin played successfully",
       spin,
      UserReward,
-      
+     prizes: [ 
+    "50$",
+    "1$",
+    "5$",
+    "20$",
+    "JACKPOT",
+    "15$",
+    "100$",
+    "1$",
+    "500$",
+    "10$",
+    "ZERO",
+    "2$",
+  ]      
     });
 
   } catch (error) {
@@ -125,7 +137,32 @@ export const playSpin = async (req, res) => {
   }
 };
 
+export const getPrizeList = async (req, res) => {
+  try {
+    const prizes = [
+      "50$",
+    "1$",
+    "5$",
+    "20$",
+    "JACKPOT",
+    "15$",
+    "100$",
+    "1$",
+    "500$",
+    "10$",
+    "ZERO",
+    "2$",
+      
+    ];
 
+    res.status(200).json({
+      success: true,
+      prizes,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 
 export const getSpinLogs = async (req, res) => {

@@ -13,7 +13,7 @@ const spinSchema = new Schema({
     type:{
         type:String,
         enum:["free","bonus","purchased"],
-        required:true
+        default: "free"
     },
 },{
     timestamps:true
