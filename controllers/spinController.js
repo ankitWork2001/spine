@@ -158,3 +158,30 @@ export const getSpinLogs = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+export const getSpinCount = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (user.spinCount === 0) {
+      return res.status(200).json({
+        success: true,
+        spinCount: 0,
+        message: "No spins available",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      spinCount: user.spinCount,
+      message: "Spins available",
+    });
+  } catch (error) {
+    console.error("❌ Error in getSpinCount:", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+};
