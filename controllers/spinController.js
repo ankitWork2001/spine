@@ -116,18 +116,9 @@ export const playSpin = async (req, res) => {
       spin,
      UserReward,
      prizes: [ 
-    "50$",
-    "1$",
-    "5$",
-    "20$",
-    "JACKPOT",
-    "15$",
-    "100$",
-    "1$",
-    "500$",
-    "10$",
-    "ZERO",
-    "2$",
+      "0", "$1", "IPAD", "WATCH", "$0.11", "$0.66",
+  "$0.33", "$111", "$11", "$66", "$0", "$333",
+
   ]      
     });
 
@@ -139,18 +130,9 @@ export const playSpin = async (req, res) => {
 export const getPrizeList = async (req, res) => {
   try {
     const prizes = [
-      "50$",
-    "1$",
-    "5$",
-    "20$",
-    "JACKPOT",
-    "15$",
-    "100$",
-    "1$",
-    "500$",
-    "10$",
-    "ZERO",
-    "2$",
+      "0", "$1", "IPAD", "WATCH", "$0.11", "$0.66",
+  "$0.33", "$111", "$11", "$66","$333",
+
       
     ];
 
