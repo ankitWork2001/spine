@@ -9,7 +9,7 @@ const SPIN_PRICE = 1;
 export const purchaseSpin = async (req, res) => {
     try {
         const userId = req.userId;
-        // let { spinCount } = req.body;
+        let { spinCount } = req.body;
 
         spinCount = Number(spinCount);
 
@@ -56,7 +56,6 @@ export const playSpin = async (req, res) => {
   try {
     const userId = req.userId;
     
-
     const user = await User.findById(userId);
     if (!user || user.spinCount <= 0) {
       return res.status(400).json({ success: false, message: "No spins available" });

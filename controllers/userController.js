@@ -2,6 +2,7 @@ import User from "../models/userModel.js";
 import Wallet from "../models/walletModel.js";
 import RewardWallet from "../models/rewardWalletModel.js";
 import ReferralTransaction from "../models/referralTransactionModel.js";
+import Transaction from "../models/transactionModel.js";
 
 // 🟢 Get Reward Wallet Transactions
 export const getRewardWalletTransactions = async (req, res) => {
@@ -175,6 +176,75 @@ export const getRewardHistory = async (req, res) => {
       data: transactions,
     });
   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+//User summary dashboard todays earning , balanced & frozen amount 
+
+export const getUserDashboardSummary = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Fetch Wallet
+    const wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+      return res.status(404).json({ success: false, message: "Wallet not found" });
+    }
+
+    // Today's Spin Earnings (type: "bonus")
+    const spinEarnings = await Transaction.aggregate([
+      {
+        $match: {
+          userId,
+          type: "bonus",
+          createdAt: { $gte: todayStart, $lte: todayEnd }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amount" }
+        }
+      }
+    ]);
+
+    // Today's Referral Earnings
+    const referralEarnings = await ReferralTransaction.aggregate([
+      {
+        $match: {
+          referrerId: userId,
+          date: { $gte: todayStart, $lte: todayEnd }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amount" }
+        }
+      }
+    ]);
+
+    const todaysEarnings = 
+      (spinEarnings[0]?.total || 0) + 
+      (referralEarnings[0]?.total || 0);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        todaysEarnings: Number(todaysEarnings.toFixed(2)),
+        balance: Number(wallet.balance.toFixed(2)),
+        frozenAmount: Number(wallet.lockedBalance.toFixed(2))
+      }
+    });
+  } catch (error) {
+    console.error("Error in getUserDashboardSummary:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
