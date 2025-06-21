@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate, checkAdmin } from "../middleware/authMiddleware.js";
-import { createInvestmentPlan, getAllDeposits, getAllUsers, getDashboardStats, toggleUserStatus,getSpinLogs, getReferralStats, getAllWithdrawals, updateInvestmentPlan, getAllInvestmentPlans, getUser, getAllUserInvestments, toggleDepositStatus, toggleWithdrawalStatus, getAllTransactionReports, approvewithdrawals } from "../controllers/adminController.js";
+import { createInvestmentPlan, deletePlans, getAllDeposits, getAllUsers, getDashboardStats, toggleUserStatus,getSpinLogs, getReferralStats, getAllWithdrawals, updateInvestmentPlan, getAllInvestmentPlans, getUser, getAllUserInvestments, toggleDepositStatus, toggleWithdrawalStatus, getAllTransactionReports, approvewithdrawals } from "../controllers/adminController.js";
 
 
 const router = Router();
@@ -35,6 +35,8 @@ router.get('/wallet/withdrawals',authenticate,checkAdmin,getAllWithdrawals);
 
 router.get('/spins/logs', authenticate, checkAdmin, getSpinLogs);
 
-router.get('/referrals', authenticate, checkAdmin,getReferralStats );
+router.get('/referrals', authenticate, checkAdmin,getReferralStats);
+
+router.delete('/deleteplan/:id', authenticate, deletePlans);
 
 export default router;

@@ -330,3 +330,20 @@ export const getReferralStats = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+
+export const deletePlans = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedPlan = await InvestmentPlan.findByIdAndDelete(id);
+
+    if (!deletedPlan) {
+      return res.json({ message: "Plan not found" });
+    }
+
+    res.json({ message: "Plan deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
