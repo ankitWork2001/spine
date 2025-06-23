@@ -90,16 +90,8 @@ export const playSpin = async (req, res) => {
     }
 
     UserReward.balance += spinValue; // ✅ Correct field
-    if (spinValue > 0) {
-      UserReward.transactions.push({
-        type: "credit",
-        amount: spinValue,
-        reason: "Spin reward",
-        date: new Date(),
-      });
-    }
     await UserReward.save();
-
+    
     // ✅ Optional: Add to transaction log if needed
     if (spinValue > 0) {
       await Transaction.create({
