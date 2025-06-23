@@ -3,6 +3,7 @@ import ReferralTransaction from "../models/referralTransactionModel.js";
 import User from "../models/userModel.js";
 import mongoose from "mongoose";
 import Referral from "../models/referralModel.js";
+import Spin from "../models/spinModel.js"; 
 
 
 // GET /api/reward-wallet
@@ -13,19 +14,27 @@ export const getRewardWallet = async (req, res) => {
     let wallet = await RewardWallet.findOne({ userId });
     if (!wallet) {
       // Auto-create wallet if not found
-      wallet = await RewardWallet.create({ userId });
+      wallet = await RewardWallet.create({ userId, rewardBalance: 0, transactions: [] });
     }
+
+    // Get all spin history where user actually won something
+    const spinHistory = await Spin.find({ userId, resultValue: { $gt: 0 } })
+      .select("resultValue createdAt")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       message: "Reward wallet fetched",
       rewardBalance: wallet.balance,
       rewardhistory: wallet.transactions,
+      spinHistory,
     });
   } catch (error) {
+    console.error("Error in getRewardWallet:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 // GET /api/reward-history
 export const getRewardHistory = async (req, res) => {

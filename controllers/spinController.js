@@ -7,55 +7,56 @@ import RewardWallet from "../models/rewardWalletModel.js";
 const SPIN_PRICE = 1;
 
 export const purchaseSpin = async (req, res) => {
-    try {
-        const userId = req.userId;
-        let { spinCount } = req.body;
+  try {
+    const userId = req.userId;
+    let { spinCount } = req.body;
 
-        spinCount = Number(spinCount);
+    spinCount = Number(spinCount);
 
-        if (!spinCount || spinCount <= 0) {
-            return res.status(400).json({ success: false, message: "Spin count must be at least 1." });
-        }
-
-        const totalAmount = spinCount * SPIN_PRICE;
-
-        const userWallet = await Wallet.findOne({ userId });
-        if (!userWallet || userWallet.balance < totalAmount) {
-            return res.status(400).json({ success: false, message: "Insufficient balance." });
-        }
-
-        userWallet.balance -= totalAmount;
-        await userWallet.save();
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found." });
-        }
-
-        user.spinCount += spinCount;
-        await user.save();
-
-    
-
-      res.status(200).json({
-    success: true,
-    message: `Successfully purchased ${spinCount} spin(s).`,
-    updatedSpinCount: user.spinCount,
-    remainingBalance: userWallet.balance
-});
-    } catch (error) {
-        console.error('❌ Error in purchaseSpin:', error);
-        res.status(500).json({ success: false, error: "Internal Server Error" });
+    if (!spinCount || spinCount <= 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Spin count must be at least 1." });
     }
+
+    const totalAmount = spinCount * SPIN_PRICE;
+
+    const userWallet = await Wallet.findOne({ userId });
+    if (!userWallet || userWallet.balance < totalAmount) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Insufficient balance." });
+    }
+
+    userWallet.balance -= totalAmount;
+    await userWallet.save();
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    user.spinCount += spinCount;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully purchased ${spinCount} spin(s).`,
+      updatedSpinCount: user.spinCount,
+      remainingBalance: userWallet.balance,
+    });
+  } catch (error) {
+    console.error("❌ Error in purchaseSpin:", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
 };
-
-
-
 
 export const playSpin = async (req, res) => {
   try {
     const userId = req.userId;
-    
+
     const user = await User.findById(userId);
     if (!user || user.spinCount <= 0) {
       return res.status(400).json({ success: false, message: "No spins available" });
@@ -64,41 +65,42 @@ export const playSpin = async (req, res) => {
     let spinValue = 0;
 
     if (!user.hasClaimedFirstSpin) {
-      // First spin reward
       spinValue = 0.11;
       user.hasClaimedFirstSpin = true;
     } else {
-      // Cycle reward: every 3rd spin (cycleSpinCounter 2 means the next spin is the 3rd spin)
       if (user.cycleSpinCounter === 2) {
         spinValue = 1;
-        user.cycleSpinCounter = 0; // Reset the cycle
+        user.cycleSpinCounter = 0;
       } else {
         spinValue = 0;
-        user.cycleSpinCounter += 1; // Increase the cycle count
+        user.cycleSpinCounter += 1;
       }
     }
 
-    // Create spin log
-    const spin = await Spin.create({
-      userId,
-      resultValue: spinValue,
-    });
+    const spin = await Spin.create({ userId, resultValue: spinValue });
 
-    // Update user spins
     user.spinCount -= 1;
     user.totalSpinPlayed += 1;
     await user.save();
 
-    // Update Rewardwallet
+    // ✅ FIX: update rewardBalance not balance
     const UserReward = await RewardWallet.findOne({ userId });
     if (!UserReward) {
-      return res.status(404).json({ success: false, message: "User wallet not found" });
+      return res.status(404).json({ success: false, message: "User reward wallet not found" });
     }
 
-    UserReward.rewardBalance += spinValue;
+    UserReward.balance += spinValue; // ✅ Correct field
+    if (spinValue > 0) {
+      UserReward.transactions.push({
+        type: "credit",
+        amount: spinValue,
+        reason: "Spin reward",
+        date: new Date(),
+      });
+    }
     await UserReward.save();
 
-    // Create transaction only if spinValue > 0
+    // ✅ Optional: Add to transaction log if needed
     if (spinValue > 0) {
       await Transaction.create({
         userId,
@@ -108,32 +110,38 @@ export const playSpin = async (req, res) => {
       });
     }
 
-    const { password, ...userData } = user._doc;
-
     res.status(200).json({
       success: true,
       message: "Spin played successfully",
       spin,
-     UserReward,
-     prizes: [ 
-      "0", "$1", "IPAD", "WATCH", "$0.11", "$0.66",
-  "$0.33", "$111", "$11", "$66", "$0", "$333",
-
-  ]      
+      UserReward,
+      prizes: [
+        "0", "$1", "IPAD", "WATCH", "$0.11", "$0.66",
+        "$0.33", "$111", "$11", "$66", "$0", "$333"
+      ]
     });
 
   } catch (error) {
+    console.error("Error in playSpin:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
+
 export const getPrizeList = async (req, res) => {
   try {
     const prizes = [
-      "0", "$1", "IPAD", "WATCH", "$0.11", "$0.66",
-  "$0.33", "$111", "$11", "$66","$333",
-
-      
+      "0",
+      "$1",
+      "IPAD",
+      "WATCH",
+      "$0.11",
+      "$0.66",
+      "$0.33",
+      "$111",
+      "$11",
+      "$66",
+      "$333",
     ];
 
     res.status(200).json({
@@ -145,13 +153,11 @@ export const getPrizeList = async (req, res) => {
   }
 };
 
-
 export const getSpinLogs = async (req, res) => {
   try {
     const userId = req.userId;
-    const spins = await Spin.find({ userId }).sort({ createdAt: -1 }); 
-    if (spins.length === 0)
-      return res.json({message:"No spin log found"})
+    const spins = await Spin.find({ userId }).sort({ createdAt: -1 });
+    if (spins.length === 0) return res.json({ message: "No spin log found" });
     res.status(200).json({ success: true, spins });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -164,7 +170,9 @@ export const getSpinCount = async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     if (user.spinCount === 0) {
