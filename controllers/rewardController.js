@@ -18,16 +18,23 @@ export const getRewardWallet = async (req, res) => {
     }
 
     // Get all spin history where user actually won something
-    const spinHistory = await Spin.find({ userId, resultValue: { $gt: 0 } })
-      .select("resultValue createdAt")
-      .sort({ createdAt: -1 });
+    const spinTransactions = wallet.transactions.filter(
+    (tx) => tx.reason === "Spin reward"
+    );
+
+    const referralTransations = wallet.transactions.filter(
+      (tx) => tx.reason === "Referral commission"
+    );
+
+    const totalSpinReward = spinTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+    const totalReferralReward = referralTransations.reduce((sum, tx) => sum + tx.amount, 0);
 
     res.status(200).json({
       success: true,
       message: "Reward wallet fetched",
       rewardBalance: wallet.balance,
-      rewardhistory: wallet.transactions,
-      spinHistory,
+      referralBalance: totalReferralReward,
+      spineBalance: totalSpinReward,
     });
   } catch (error) {
     console.error("Error in getRewardWallet:", error);

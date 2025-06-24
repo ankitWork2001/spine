@@ -1,7 +1,6 @@
 import User from "../models/userModel.js";
 import Wallet from "../models/walletModel.js";
 import Spin from "../models/spinModel.js";
-import Transaction from "../models/transactionModel.js";
 import RewardWallet from "../models/rewardWalletModel.js";
 
 const SPIN_PRICE = 1;
@@ -59,7 +58,9 @@ export const playSpin = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user || user.spinCount <= 0) {
-      return res.status(400).json({ success: false, message: "No spins available" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No spins available" });
     }
 
     let spinValue = 0;
@@ -86,21 +87,22 @@ export const playSpin = async (req, res) => {
     // ✅ FIX: update rewardBalance not balance
     const UserReward = await RewardWallet.findOne({ userId });
     if (!UserReward) {
-      return res.status(404).json({ success: false, message: "User reward wallet not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User reward wallet not found" });
     }
 
-    UserReward.balance += spinValue; // ✅ Correct field
+    UserReward.balance += spinValue;
+
+    UserReward.transactions.push({
+      type: "credit",
+      amount: spinValue,
+      reason: "Spin reward",
+      date: new Date(),
+    });
     await UserReward.save();
-    
-    // ✅ Optional: Add to transaction log if needed
-    if (spinValue > 0) {
-      await Transaction.create({
-        userId,
-        type: "bonus",
-        amount: spinValue,
-        status: "completed",
-      });
-    }
+    await UserReward.save();
+
 
     res.status(200).json({
       success: true,
@@ -108,17 +110,25 @@ export const playSpin = async (req, res) => {
       spin,
       UserReward,
       prizes: [
-        "0", "$1", "IPAD", "WATCH", "$0.11", "$0.66",
-        "$0.33", "$111", "$11", "$66", "$0", "$333"
-      ]
+        "0",
+        "$1",
+        "IPAD",
+        "WATCH",
+        "$0.11",
+        "$0.66",
+        "$0.33",
+        "$111",
+        "$11",
+        "$66",
+        "$0",
+        "$333",
+      ],
     });
-
   } catch (error) {
     console.error("Error in playSpin:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 export const getPrizeList = async (req, res) => {
   try {
