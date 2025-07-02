@@ -19,7 +19,7 @@ router.put("/update", authenticate, updateUser);
 router.post("/avatar", authenticate, uploadAvatar);
 router.get("/reward-wallet", authenticate, getRewardWalletTransactions);
 router.post("/withdraw", authenticate, withdrawFromWallet);
-router.post("/otp", authenticate, sendOtp);
+router.post("/otp", sendOtp);
 router.post("/resetPass",resetPassword);
 
 
