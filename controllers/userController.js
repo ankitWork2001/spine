@@ -3,6 +3,8 @@ import Wallet from "../models/walletModel.js";
 import RewardWallet from "../models/rewardWalletModel.js";
 import ReferralTransaction from "../models/referralTransactionModel.js";
 import Transaction from "../models/transactionModel.js";
+import transporter from "../config/nodemailer.js";
+
 
 // 🟢 Get Reward Wallet Transactions
 export const getRewardWalletTransactions = async (req, res) => {
@@ -246,5 +248,92 @@ export const getUserDashboardSummary = async (req, res) => {
   } catch (error) {
     console.error("Error in getUserDashboardSummary:", error);
     res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// sentOtp in Email
+
+export const sendOtp = async(req,res)=>{
+   
+
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if(!user){
+      return res.json({success:false,message:"User not found"})
+    }
+     const otp = String(Math.floor(100000 + Math.random() * 900000));
+
+    user.otp = otp;
+   user.otpExprieAt= Date.now() + 15 * 60 * 1000;
+
+   await user.save();
+
+    const OptionMail =  {
+    from: process.env.SENDER_EMAIL,
+    to: user.email,
+    subject: "🔐 Your OTP Code for Verification",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
+        <h2 style="text-align: center; color: #333;">Verification Code</h2>
+        <p>Hi <strong>${user.name || "User"}</strong>,</p>
+        <p>We received a request to verify your email. Please use the OTP below to complete the process:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <span style="display: inline-block; font-size: 32px; letter-spacing: 8px; background: #fff; padding: 10px 20px; border: 2px dashed #007BFF; border-radius: 6px; color: #007BFF;">
+            ${otp}
+          </span>
+        </div>
+        <p>This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.</p>
+        <p>If you did not request this, please ignore this email.</p>
+        <p style="margin-top: 40px;">Thanks & Regards,<br/>The Team</p>
+        <hr style="margin-top: 30px;" />
+        <p style="font-size: 12px; color: #777;">This is an automated message. Please do not reply.</p>
+      </div>
+    `
+};
+  await transporter.sendMail(OptionMail)
+
+    res.json({
+      success:true,
+      message:"Code has ben sent successfully",
+      otp
+    })
+
+  } catch (error) {
+    
+  }
+}
+
+// resetPassword
+export const resetPassword = async (req, res) => {
+  const { email, otpp, newpassword } = req.body;
+  try {
+    const user = await User.findOne({ email });
+      
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+   
+    // Check if OTP is missing or incorrect
+    if (!otpp || otpp !== user.otp) {
+      return res.json({ success: false, message: "Invalid OTP" });
+    }
+
+    // Check if OTP is expired
+    if (Date.now() > user.otpExprieAt) {
+      return res.json({ success: false, message: "OTP has expired" });
+    }
+   user.password = newpassword;
+    user.otp = "";
+    user.otpExprieAt = 0;
+
+    await user.save();
+
+    res.json({ success: true, message: "Password has been changed successfully", });
+
+  } catch (error) {
+    res.json({ success: false, message: error.message });
   }
 };

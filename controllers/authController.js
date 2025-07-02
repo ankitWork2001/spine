@@ -3,6 +3,7 @@ import Wallet from "../models/walletModel.js";
 import RewardWallet from "../models/rewardWalletModel.js";
 import Referral from "../models/referralModel.js";
 import jwt from "jsonwebtoken";
+import transporter from "../config/nodemailer.js";
 
 // 🔐 Token Generator
 const generateToken = (userId) => {
@@ -61,6 +62,51 @@ export const signup = async (req, res) => {
         }
       }
     }
+    const OptionMail = {
+  from: process.env.SENDER_EMAIL,
+  to: email,
+  subject: '🎉 Welcome to Spin App!',
+  html: `
+    <div style="font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0d1117; padding: 40px; color: #f0f0f0;">
+  <div style="max-width: 600px; margin: auto; background-color: #161b22; border: 2px solid #ffd700; border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);">
+
+    <h1 style="color: #ffd700; font-size: 28px; margin-bottom: 10px;">🎉 Welcome to Spin & Win!</h1>
+    <p style="font-size: 16px; color: #dcdcdc;">
+      Hello <strong>${name || "Investor"}</strong>,
+    </p>
+
+    <p style="font-size: 15px; margin-top: 20px; line-height: 1.8;">
+      🌀 You’ve just entered the world of <strong>luck, strategy, and wealth!</strong><br/>
+      🎯 Spin the wheel to earn rewards<br/>
+      💼 Invest your winnings to grow your empire<br/>
+      🏆 Climb the leaderboard and become a 💸 <strong>Money Master</strong>
+    </p>
+
+    <div style="margin: 30px 0;">
+      <img src="https://media.giphy.com/media/26n6WywJyh39n1pBu/giphy.gif" alt="Spin & Win" style="width: 180px; border-radius: 10px;" />
+    </div>
+
+    <p style="font-size: 14px; color: #aaaaaa;">
+      This isn’t just a game — it’s your path to virtual riches.<br/>
+      Spin daily, invest smartly, and watch your coins multiply. 🔄💹
+    </p>
+
+    <p style="font-size: 13px; color: #555; margin-top: 40px;">
+      🔒 Tip: Luck favors the bold. But wisdom builds the kingdom. Choose wisely.
+    </p>
+
+  </div>
+
+  <p style="text-align: center; font-size: 11px; color: #999; margin-top: 25px;">
+    © ${new Date().getFullYear()} Spin & Earn Inc. • All spins are fair. All dreams are welcome.
+  </p>
+</div>
+
+  `
+};
+
+
+    await transporter.sendMail(OptionMail)
 
     return res.status(201).json({
       success: true,
@@ -80,7 +126,7 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      return res.status(400).json({ success: false, message: "Invalid credentials" });
+      return res.status(400).json({  success: false, message: "Invalid credentials" });
     }
 
     const isMatch = await user.matchPassword(password);

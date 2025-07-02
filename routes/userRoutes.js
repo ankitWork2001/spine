@@ -5,7 +5,9 @@ import {
   uploadAvatar,
   getRewardWalletTransactions,
   withdrawFromWallet,
-  getUserDashboardSummary
+  getUserDashboardSummary,
+  sendOtp,
+  resetPassword
 } from "../controllers/userController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 
@@ -17,6 +19,8 @@ router.put("/update", authenticate, updateUser);
 router.post("/avatar", authenticate, uploadAvatar);
 router.get("/reward-wallet", authenticate, getRewardWalletTransactions);
 router.post("/withdraw", authenticate, withdrawFromWallet);
+router.post("/otp", authenticate, sendOtp);
+router.post("/resetPass",resetPassword);
 
 
 export default router;
