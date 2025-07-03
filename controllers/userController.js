@@ -187,20 +187,17 @@ export const getRewardHistory = async (req, res) => {
 export const getUserDashboardSummary = async (req, res) => {
   try {
     const userId = req.userId;
+    
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+    const todayEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
 
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-
-    // Fetch Wallet
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       return res.status(404).json({ success: false, message: "Wallet not found" });
     }
 
-    // Today's Spin Earnings (type: "bonus")
     const spinEarnings = await Transaction.aggregate([
       {
         $match: {
@@ -209,28 +206,17 @@ export const getUserDashboardSummary = async (req, res) => {
           createdAt: { $gte: todayStart, $lte: todayEnd }
         }
       },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$amount" }
-        }
-      }
+      { $group: { _id: null, total: { $sum: "$amount" } } }
     ]);
 
-    // Today's Referral Earnings
     const referralEarnings = await ReferralTransaction.aggregate([
       {
         $match: {
           referrerId: userId,
-          date: { $gte: todayStart, $lte: todayEnd }
+          createdAt: { $gte: todayStart, $lte: todayEnd }
         }
       },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$amount" }
-        }
-      }
+      { $group: { _id: null, total: { $sum: "$amount" } } }
     ]);
 
     const todaysEarnings = 
@@ -250,6 +236,7 @@ export const getUserDashboardSummary = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 // sentOtp in Email
 

@@ -2,6 +2,7 @@ import User from "../models/userModel.js";
 import Wallet from "../models/walletModel.js";
 import Spin from "../models/spinModel.js";
 import RewardWallet from "../models/rewardWalletModel.js";
+import Transaction from "../models/transactionModel.js";
 
 const SPIN_PRICE = 1;
 
@@ -103,7 +104,12 @@ export const playSpin = async (req, res) => {
     await UserReward.save();
     await UserReward.save();
 
-
+await Transaction.create({
+  userId,
+  type: "bonus", 
+  amount: spinValue,
+  status: "completed" 
+});
     res.status(200).json({
       success: true,
       message: "Spin played successfully",
