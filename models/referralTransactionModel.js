@@ -8,3 +8,8 @@ const referralTransactionSchema = new mongoose.Schema({
 }, { timestamps: true });
 const ReferralTransaction = mongoose.model("ReferralTransaction", referralTransactionSchema);
 export default ReferralTransaction;
+
+
+userId: {
+  type:mongoose.Schema.Types.ObjectId
+}
