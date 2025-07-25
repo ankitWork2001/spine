@@ -96,8 +96,6 @@ export const getDashboardStats = async (req, res) => {
         totalWithdrawals += transaction.amount;
       }
     });
-
-
     
     res.status(200).json({
       success: true,
@@ -160,88 +158,129 @@ export const getAllWithdrawals = async (req,res) => {
   }
 };
 
-// Toggle Deposit status to Completed or Failed
-export const toggleDepositStatus = async (req,res) => {
+export const handleDepositApproval = async (req, res) => {
   try {
-    const {id} = req.params;
-    const {status} = req.body;
-    const trans = await Transaction.findById(id);
+    const { id } = req.params;
+    const { status } = req.body; // Expecting "completed", "failed", etc.
 
-    if(!trans){
-      return res.status(404).json({ success: false, message: "Transaction not found" });   
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Transaction ID is required" });
     }
 
-    // Ensure it's a deposit and still pending
-    if(trans.type !== 'deposit' || trans.status !== 'pending'){
-      return res.status(404).json({ success: false, message: "Transaction type is not deposit or the status is not pending" });   
+    const transaction = await Transaction.findById(id);
+    if (!transaction || transaction.type !== "deposit") {
+      return res.status(404).json({ success: false, message: "Deposit transaction not found" });
     }
 
-    trans.status = status;
-    await trans.save();
+    // Only process if still pending
+    if (transaction.status !== "pending") {
+      return res.status(400).json({ success: false, message: "Transaction already processed" });
+    }
 
-    res.status(200).json({
+    transaction.status = status;
+    await transaction.save();
+
+    // 💰 If admin marks it completed, update user's wallet
+    if (status === "completed") {
+      const wallet = await Wallet.findOne({ userId: transaction.userId });
+
+      if (!wallet) {
+        return res.status(404).json({ success: false, message: "User wallet not found" });
+      }
+
+      wallet.balance += transaction.amount;
+      await wallet.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Deposit approved and wallet updated",
+        transaction,
+        wallet,
+      });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: "Deposit status updated successfully",
-      transaction: trans,
+      message: `Deposit status set to ${status}`,
+      transaction,
     });
 
   } catch (error) {
-     res.status(500).json({ success: false, error: error.message });   
+    console.error("Deposit approval error:", error);
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// Approve all withdrawals
-export const approvewithdrawals = async (req,res) => {
+
+export const handleWithdrawalApproval = async (req, res) => {
   try {
-    const transactions = await Transaction.find({ type: 'withdrawal', status: 'pending' });
-    if(!transactions || transactions.length === 0){
-      return res.status(404).json({ success: false, message: "Transactions not found " });   
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (id) {
+      // Handle single withdrawal toggle
+      const trans = await Transaction.findById(id);
+
+      if (!trans || trans.amount <= 100) {
+        return res.status(404).json({ success: false, message: "Transaction not found or amount is less than 100" });
+      }
+
+      if (trans.type !== 'withdrawal' || trans.status !== 'pending') {
+        return res.status(400).json({ success: false, message: "Invalid transaction type or already processed" });
+      }
+
+      if (status === 'completed') {
+        // Deduct wallet balance
+        const wallet = await Wallet.findOne({ userId: trans.userId });
+        if (!wallet) {
+          return res.status(404).json({ success: false, message: "Wallet not found" });
+        }
+
+        if (wallet.balance < trans.amount) {
+          return res.status(400).json({ success: false, message: "Insufficient wallet balance" });
+        }
+
+        wallet.balance -= trans.amount;
+        await wallet.save();
+      }
+
+      trans.status = status;
+      await trans.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Withdrawal status updated successfully",
+        transaction: trans,
+      });
+    } else {
+      // Handle bulk approval
+      const transactions = await Transaction.find({ type: 'withdrawal', status: 'pending' });
+
+      if (!transactions.length) {
+        return res.status(404).json({ success: false, message: "No pending withdrawals found" });
+      }
+
+      const results = [];
+
+      for (let t of transactions) {
+        const wallet = await Wallet.findOne({ userId: t.userId });
+        if (wallet && wallet.balance >= t.amount) {
+          wallet.balance -= t.amount;
+          await wallet.save();
+          t.status = 'completed';
+          await t.save();
+          results.push(t);
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "All valid pending withdrawals approved and wallet updated",
+        transactions: results,
+      });
     }
-    
-    await Promise.all(
-      transactions.map(async (t) => {
-        t.status = 'completed';
-        await t.save();
-      })
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Transactions approved",
-      transactions,
-    });
-
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });       
-  }
-};
-
-//Toggle Withdrawals status to Completed or Failed
-export const toggleWithdrawalStatus = async (req,res) => {
-  try {
-    const {id} = req.params;
-    const {status} = req.body;
-    const trans = await Transaction.findById(id);
-
-    if(!trans || trans.amount <= 100){
-      return res.status(404).json({ success: false, message: "Transaction not found or Amount is less than 100" });   
-    }
-
-    // Ensure it's a withdrawal and still pending
-    if(trans.type !== 'withdrawal' || trans.status !== 'pending'){
-      return res.status(404).json({ success: false, message: "Transaction type is not withdrawal or the status is not pending" });   
-    }
-
-    trans.status = status;
-    await trans.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Withdrawal status updated successfully",
-      transaction: trans,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message }); 
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 

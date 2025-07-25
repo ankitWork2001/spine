@@ -23,7 +23,7 @@ export const getInvestmentPlans = async (req, res) => {
 
 export const subscribeInvestment = async (req, res) => {
   try {
-    const { id } = req.params; // planId
+    const { id } = req.params;
     const { amount } = req.body;
     const userId = req.userId;
 

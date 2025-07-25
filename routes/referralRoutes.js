@@ -14,7 +14,7 @@ const router = Router();
 router.get("/", getAllReferral);
 
 // Authenticated user routes
-router.get("/code", authenticate, getReferralCode);
+router.get("/code-link", authenticate, getReferralCode);
 router.get("/tree", authenticate, getReferralTree);
 router.get("/summary", authenticate, getReferralSummary);
 router.get("/my-referral-used", authenticate, getMyReferralUsedInfo);

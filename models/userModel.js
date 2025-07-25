@@ -57,8 +57,6 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
-
-    // Referral code (used in both systems)
     code: {
       type: String,
       default: null,

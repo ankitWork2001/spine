@@ -35,53 +35,45 @@ export const depositFunds = async (req, res) => {
     const userId = req.userId;
     const { amount } = req.body;
 
+    // Optional: check minimum deposit
+    if (amount <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid deposit amount" });
+    }
+
+    // Just check if wallet exists, but DO NOT update balance here
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       return res.status(404).json({ success: false, message: "Wallet not found" });
     }
 
-    wallet.balance += amount;
-    await wallet.save();
-
-    await Transaction.create({
+    // Create deposit transaction with status: pending
+    const transaction = await Transaction.create({
       userId,
       type: "deposit",
       amount,
-      status: "pending",
+      status: "pending"
     });
-
-    // Check for a referral and apply 10% commission only once
-    const referral = await Referral.findOne({
-      referredUser: userId,
-      isCommissionGiven: false
-    });
-
-    if (referral) {
-      const referrerWallet = await Wallet.findOne({ userId: referral.referredBy });
-      if (referrerWallet) {
-        const commission = amount * 0.1;
-        referrerWallet.commission += commission;
-        await referrerWallet.save();
-
-        referral.isCommissionGiven = true; // Mark commission as given
-        await referral.save();
-      }
-    }
 
     res.status(200).json({
       success: true,
-      message: "Deposit successful",
-      wallet,
+      message: "Deposit request submitted. Awaiting admin approval.",
+      transaction
     });
+
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
+
 export const withdrawFunds = async (req, res) => {
   try {
     const userId = req.userId;
     const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid withdrawal amount" });
+    }
 
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
@@ -91,38 +83,32 @@ export const withdrawFunds = async (req, res) => {
     const plan = await UserInvestment.findOne({ userId });
 
     let availableBalance = wallet.balance;
-
     if (plan && plan.status === "active") {
-      availableBalance = wallet.balance - plan.lockedAmount;
+      availableBalance -= plan.lockedAmount;
     }
 
-    if (amount <= 100) {
+    if (amount < 100) {
       return res.status(400).json({ success: false, message: "Minimum withdrawal is ₹100" });
     }
 
     if (availableBalance < amount) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `Insufficient withdrawable balance. You can withdraw up to ₹${availableBalance}` 
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient withdrawable balance. You can withdraw up to ₹${availableBalance}`,
       });
     }
-
-    wallet.balance -= amount;
-    await wallet.save();
 
     await Transaction.create({
       userId,
       type: "withdrawal",
       amount,
-      status: "pending"
+      status: "pending",
     });
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Withdrawal successful", 
-      wallet 
+    res.status(200).json({
+      success: true,
+      message: "Withdrawal request submitted and pending admin approval.",
     });
-
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

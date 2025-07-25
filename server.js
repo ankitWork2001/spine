@@ -46,7 +46,6 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notification', notificationRoutes);
 app.use('/api/reward', rewardRoutes); // contains /reward-wallet and /reward-history
 
-// 404 Handler
 app.use((req, res, next) => {
     res.status(404).json({ message: 'Route not found' });
 });

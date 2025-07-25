@@ -1,42 +1,41 @@
 import { Router } from "express";
 import { authenticate, checkAdmin } from "../middleware/authMiddleware.js";
-import { createInvestmentPlan, deletePlans, getAllDeposits, getAllUsers, getDashboardStats, toggleUserStatus,getSpinLogs, getReferralStats, getAllWithdrawals, updateInvestmentPlan, getAllInvestmentPlans, getUser, getAllUserInvestments, toggleDepositStatus, toggleWithdrawalStatus, getAllTransactionReports, approvewithdrawals } from "../controllers/adminController.js";
-
+import * as adminlogic from "../controllers/adminController.js"; 
 
 const router = Router();
 
-router.get('/dashboard', authenticate, checkAdmin, getDashboardStats);
+router.get('/dashboard', authenticate, checkAdmin, adminlogic.getDashboardStats);
 
-router.get('/approvewithdrawals', authenticate, checkAdmin, approvewithdrawals);
+router.get('/approvewithdrawals', authenticate, checkAdmin, adminlogic.getAllWithdrawals);
 
-router.post('/investment/plan',authenticate,checkAdmin,createInvestmentPlan);
+router.put('/withdrawalstatus/:id', authenticate, checkAdmin,  adminlogic.handleWithdrawalApproval);
 
-router.get('/investment/plans', authenticate, checkAdmin, getAllInvestmentPlans)
+router.post('/investment/plan',authenticate,checkAdmin,adminlogic.createInvestmentPlan);
 
-router.get('/userinvestments',authenticate, checkAdmin, getAllUserInvestments);
+router.get('/investment/plans', authenticate, checkAdmin, adminlogic.getAllInvestmentPlans)
 
-router.put('/investment/updateplan/:id',authenticate, checkAdmin, updateInvestmentPlan);
+router.get('/userinvestments',authenticate, checkAdmin,  adminlogic.getAllUserInvestments);
 
-router.get('/users', authenticate, checkAdmin, getAllUsers);
+router.put('/investment/updateplan/:id',authenticate, checkAdmin,  adminlogic.updateInvestmentPlan);
 
-router.get('/user/:id',authenticate, checkAdmin, getUser);
+router.get('/users', authenticate, checkAdmin,  adminlogic.getAllUsers);
 
-router.post('/user/:id/ban', authenticate, checkAdmin,toggleUserStatus );
+router.get('/user/:id',authenticate, checkAdmin,  adminlogic.getUser);
 
-router.put('/depositstatus/:id', authenticate, checkAdmin, toggleDepositStatus);
+router.post('/user/:id/ban', authenticate, checkAdmin,  adminlogic.toggleUserStatus );
 
-router.put('/withdrawalstatus/:id', authenticate, checkAdmin, toggleWithdrawalStatus);
+router.put('/depositstatus/:id', authenticate, checkAdmin,  adminlogic.handleDepositApproval);
 
-router.get('/transactions', authenticate, checkAdmin, getAllTransactionReports);
+router.get('/transactions', authenticate, checkAdmin,  adminlogic.getAllTransactionReports);
 
-router.get('/wallet/deposits', authenticate, checkAdmin,getAllDeposits);
+router.get('/wallet/deposits', authenticate, checkAdmin,  adminlogic.getAllDeposits);
 
-router.get('/wallet/withdrawals',authenticate,checkAdmin,getAllWithdrawals);
+router.get('/wallet/withdrawals',authenticate,checkAdmin,  adminlogic.getAllWithdrawals);
 
-router.get('/spins/logs', authenticate, checkAdmin, getSpinLogs);
+router.get('/spins/logs', authenticate, checkAdmin,  adminlogic.getSpinLogs);
 
-router.get('/referrals', authenticate, checkAdmin,getReferralStats);
+router.get('/referrals', authenticate, checkAdmin,  adminlogic.getReferralStats);
 
-router.delete('/deleteplan/:id', authenticate, deletePlans);
+router.delete('/deleteplan/:id', authenticate,  adminlogic.deletePlans);
 
 export default router;

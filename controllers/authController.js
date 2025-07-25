@@ -10,7 +10,7 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-// 🧾 SIGNUP
+// SIGNUP
 export const signup = async (req, res) => {
   try {
     const { name, username, email, password, mobile, role, referralCode } = req.body;
@@ -119,7 +119,7 @@ export const signup = async (req, res) => {
   }
 };
 
-// 🔐 LOGIN
+// LOGIN
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;

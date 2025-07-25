@@ -6,17 +6,28 @@ import RewardWallet from "../models/rewardWalletModel.js";
 import ReferralTransaction from "../models/referralTransactionModel.js";
 import UserInvestment from "../models/userInvestmentModel.js";
 
-// ✅ Get Own Referral Code
+// ✅ Get Own Referral Code & Referral link
 export const getReferralCode = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    res.status(200).json({ success: true, message: "Referral code fetched", code: user.code });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const referralCode = user.code;
+    const referralLink = `https://yourbackend.com/r/${referralCode}`;
+
+    res.status(200).json({
+      success: true,
+      message: "Referral code fetched",
+      code: referralCode,
+      referralLink: referralLink
+    });
+
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 
 // ✅ Referral Tree

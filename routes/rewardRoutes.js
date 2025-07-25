@@ -14,5 +14,4 @@ router.get("/history", authenticate, getRewardHistory);
 router.get('/referral-summary', authenticate, getMyReferralSummary);
 router.get('/ReferralBonusHistory', authenticate, getReferralBonusHistory);
 
-
 export default router;
