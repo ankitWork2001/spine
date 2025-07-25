@@ -161,18 +161,17 @@ export const getAllWithdrawals = async (req,res) => {
 export const handleDepositApproval = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body; // Expecting "completed", "failed", etc.
+    const { status } = req.body;
 
     if (!id) {
       return res.status(400).json({ success: false, message: "Transaction ID is required" });
     }
 
-    const transaction = await Transaction.findById(id);
+    const transaction = await Transaction.findById(id).populate("userId", "name email phone createdAt");
     if (!transaction || transaction.type !== "deposit") {
       return res.status(404).json({ success: false, message: "Deposit transaction not found" });
     }
 
-    // Only process if still pending
     if (transaction.status !== "pending") {
       return res.status(400).json({ success: false, message: "Transaction already processed" });
     }
@@ -180,9 +179,8 @@ export const handleDepositApproval = async (req, res) => {
     transaction.status = status;
     await transaction.save();
 
-    // 💰 If admin marks it completed, update user's wallet
     if (status === "completed") {
-      const wallet = await Wallet.findOne({ userId: transaction.userId });
+      const wallet = await Wallet.findOne({ userId: transaction.userId._id });
 
       if (!wallet) {
         return res.status(404).json({ success: false, message: "User wallet not found" });
@@ -219,7 +217,7 @@ export const handleWithdrawalApproval = async (req, res) => {
 
     if (id) {
       // Handle single withdrawal toggle
-      const trans = await Transaction.findById(id);
+      const trans = await Transaction.findById(id).populate("userId", "name email phone createdAt");
 
       if (!trans || trans.amount <= 100) {
         return res.status(404).json({ success: false, message: "Transaction not found or amount is less than 100" });
@@ -231,7 +229,7 @@ export const handleWithdrawalApproval = async (req, res) => {
 
       if (status === 'completed') {
         // Deduct wallet balance
-        const wallet = await Wallet.findOne({ userId: trans.userId });
+        const wallet = await Wallet.findOne({ userId: trans.userId._id });
         if (!wallet) {
           return res.status(404).json({ success: false, message: "Wallet not found" });
         }
@@ -251,10 +249,12 @@ export const handleWithdrawalApproval = async (req, res) => {
         success: true,
         message: "Withdrawal status updated successfully",
         transaction: trans,
+        user: trans.userId, // Full user info
       });
+
     } else {
-      // Handle bulk approval
-      const transactions = await Transaction.find({ type: 'withdrawal', status: 'pending' });
+      // Bulk approval of all pending withdrawals
+      const transactions = await Transaction.find({ type: 'withdrawal', status: 'pending' }).populate("userId", "name email phone createdAt");
 
       if (!transactions.length) {
         return res.status(404).json({ success: false, message: "No pending withdrawals found" });
@@ -263,13 +263,16 @@ export const handleWithdrawalApproval = async (req, res) => {
       const results = [];
 
       for (let t of transactions) {
-        const wallet = await Wallet.findOne({ userId: t.userId });
+        const wallet = await Wallet.findOne({ userId: t.userId._id });
         if (wallet && wallet.balance >= t.amount) {
           wallet.balance -= t.amount;
           await wallet.save();
           t.status = 'completed';
           await t.save();
-          results.push(t);
+          results.push({
+            transaction: t,
+            user: t.userId,
+          });
         }
       }
 
@@ -279,10 +282,12 @@ export const handleWithdrawalApproval = async (req, res) => {
         transactions: results,
       });
     }
+
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 //View All Transactions and reports
 export const getAllTransactionReports = async (req,res) => {
