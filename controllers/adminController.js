@@ -1,6 +1,7 @@
 import InvestmentPlan from "../models/investmentPlanModel.js";
 import User from "../models/userModel.js";
 import Wallet from "../models/walletModel.js";
+import RewardWallet from '../models/rewardWalletModel.js';
 import Referral from "../models/referralModel.js";
 import Transaction from "../models/transactionModel.js";
 import Spin from "../models/spinModel.js";
@@ -58,8 +59,26 @@ export const getAllUserInvestments = async (req,res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({role: "user"});
-    res.status(200).json({ success: true,count: users.length, users });
+    const users = await User.find({ role: 'user' });
+
+    const enrichedUsers = await Promise.all(users.map(async (user) => {
+      const wallet = await Wallet.findOne({ userId: user._id });
+      const rewardWallet = await RewardWallet.findOne({ userId: user._id });
+      const transactions = await Transaction.find({ userId: user._id });
+
+      return {
+        ...user.toObject(),
+        wallet: wallet || {},
+        rewardWallet: rewardWallet || {},
+        transactions,
+      };
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: enrichedUsers.length,
+      users: enrichedUsers
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
