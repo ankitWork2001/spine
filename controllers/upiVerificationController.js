@@ -10,7 +10,7 @@ export const requestUpiVerification = async (req, res) => {
     const userId = req.user._id;
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "Binance user not found" });
 
     const otp = crypto.randomInt(100000, 1000000).toString();
     const expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
@@ -21,13 +21,13 @@ export const requestUpiVerification = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    await sendMail(user.email, "Your OTP for UPI Verification", `Your OTP is: ${otp}`);
+    await sendMail(user.email, "Your Binance OTP", `Your Binance OTP is: ${otp}`);
 
-    return res.status(200).json({ message: "OTP sent to your email" });
+    return res.status(200).json({ message: "Binance OTP sent to your email" });
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: "Binance internal server error" });
   }
 };
 
@@ -38,16 +38,15 @@ export const verifyUpiOtp = async (req, res) => {
 
     const record = await UpiVerification.findOne({ user: userId });
 
-    if (!record) return res.status(404).json({ message: "Verification record not found" });
-    if (record.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
-    if (record.otpExpiresAt < Date.now()) return res.status(400).json({ message: "OTP expired" });
+    if (!record) return res.status(404).json({ message: "Binance record not found" });
+    if (record.otp !== otp) return res.status(400).json({ message: "Invalid Binance OTP" });
+    if (record.otpExpiresAt < Date.now()) return res.status(400).json({ message: "Binance OTP expired" });
 
     record.isVerified = true;
     await record.save();
 
-    return res.status(200).json({ message: "UPI Verified successfully" });
+    return res.status(200).json({ message: "Binance verification successful" });
   } catch (err) {
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Binance server error" });
   }
 };
-
