@@ -12,8 +12,8 @@ import {
 const router = Router();
 
 // Public
-router.get("/plans",authenticate ,getInvestmentPlans);
-
+// router.get("/plans",authenticate ,getInvestmentPlans);
+router.get("/plans",getInvestmentPlans);
 // Authenticated
 router.post("/subscribe/:id", authenticate, subscribeInvestment);
 router.get("/my-active", authenticate, getActiveInvestments);
