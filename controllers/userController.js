@@ -187,7 +187,6 @@ export const getRewardHistory = async (req, res) => {
 export const getUserDashboardSummary = async (req, res) => {
   try {
     const userId = req.userId;
-    
 
     const now = new Date();
     const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
@@ -223,12 +222,19 @@ export const getUserDashboardSummary = async (req, res) => {
       (spinEarnings[0]?.total || 0) + 
       (referralEarnings[0]?.total || 0);
 
+    // ✅ Fetch latest 5 transactions
+    const latestTransactions = await Transaction.find({ userId })
+      .sort({ createdAt: -1 }) // sort by newest
+      .limit(5)
+      .select("-__v"); // optionally exclude __v
+
     res.status(200).json({
       success: true,
       data: {
         todaysEarnings: Number(todaysEarnings.toFixed(2)),
         balance: Number(wallet.balance.toFixed(2)),
-        frozenAmount: Number(wallet.lockedBalance.toFixed(2))
+        frozenAmount: Number(wallet.lockedBalance.toFixed(2)),
+        recentTransactions: latestTransactions
       }
     });
   } catch (error) {

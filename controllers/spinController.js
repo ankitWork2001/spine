@@ -41,6 +41,16 @@ export const purchaseSpin = async (req, res) => {
     user.spinCount += spinCount;
     await user.save();
 
+    // ✅ Create transaction
+    const transaction = new Transaction({
+      userId,
+      amount: totalAmount,
+      type: "SpinPurchase",
+      amount: spinCount,
+    });
+
+    await transaction.save();
+
     res.status(200).json({
       success: true,
       message: `Successfully purchased ${spinCount} spin(s).`,
@@ -52,6 +62,7 @@ export const purchaseSpin = async (req, res) => {
     res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
+
 
 // play Spin 2nd route
 export const playSpin2 = async (req, res) => {
