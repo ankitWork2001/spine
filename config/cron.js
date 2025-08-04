@@ -21,8 +21,8 @@ cron.schedule('*/1 * * * *', async () => {
       const endDate = new Date(investment.endDate);
 
       if (today >= endDate) {
-        const roiAmount = (investment.amount * plan.roiPercent * plan.durationDays) / 100;
-
+       const roiAmount = (investment.amount * plan.roiPercent) / 100;
+       
         userWallet.balance += roiAmount;
         userWallet.lockedBalance -= investment.amount;
         userWallet.balance += investment.amount;
