@@ -15,6 +15,7 @@ import investmentRoutes from './routes/investmentRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import rewardRoutes from './routes/rewardRoutes.js';
 import upiVerificationRoutes from './routes/upiVerificationRoutes.js';
+import addressVerify from "./routes/addressRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,6 +48,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notification', notificationRoutes);
 app.use('/api/reward', rewardRoutes); // contains /reward-wallet and /reward-history
 app.use('/api/upiVerification', upiVerificationRoutes);
+app.use('/api/addressVerify', addressVerify);
 
 app.use((req, res, next) => {
     res.status(404).json({ message: 'Route not found' });

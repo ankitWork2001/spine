@@ -40,7 +40,10 @@ const userSchema = new Schema(
       default: "",
     },
 
-    // Spin system fields
+    address: {
+      type: String,
+      default: "",
+    },
     spinCount: {
       type: Number,
       default: 1,
@@ -64,13 +67,13 @@ const userSchema = new Schema(
     },
 
     otp: {
-      type:String,
-      default: '',
+      type: String,
+      default: "",
     },
-    otpExprieAt:{
+    otpExprieAt: {
       type: Number,
-       default: 0
-    }
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -92,5 +95,5 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-const User = mongoose.model("User", userSchema);
+export const User = mongoose.models.User || mongoose.model('User', userSchema);
 export default User;
