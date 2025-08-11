@@ -19,7 +19,8 @@ const transactionSchema = new Schema({
         type:String,
         enum:["pending","completed","failed"],
         default:"completed"
-    }
+    },
+    address: { type: String },
 },{
     timestamps:true
 });

@@ -2,6 +2,7 @@ import Wallet from "../models/walletModel.js";
 import Transaction from "../models/transactionModel.js";
 import Referral from "../models/referralModel.js";
 import UserInvestment from "../models/userInvestmentModel.js";
+import User from "../models/userModel.js";
 
 
 export const getWalletBalance = async (req, res) => {
@@ -35,6 +36,8 @@ export const depositFunds = async (req, res) => {
     const userId = req.userId;
     const { amount } = req.body;
 
+    const user = await User.findById(userId).select("address");
+
     // Optional: check minimum deposit
     if (amount <= 0) {
       return res.status(400).json({ success: false, message: "Invalid deposit amount" });
@@ -51,7 +54,8 @@ export const depositFunds = async (req, res) => {
       userId,
       type: "deposit",
       amount,
-      status: "pending"
+      status: "pending",
+      address: user?.address || null
     });
 
     res.status(200).json({
@@ -70,6 +74,8 @@ export const withdrawFunds = async (req, res) => {
   try {
     const userId = req.userId;
     const { amount } = req.body;
+
+    const user = await User.findById(userId).select("address");
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ success: false, message: "Invalid withdrawal amount" });
@@ -103,6 +109,7 @@ export const withdrawFunds = async (req, res) => {
       type: "withdrawal",
       amount,
       status: "pending",
+      address: user?.address || null
     });
 
     res.status(200).json({
