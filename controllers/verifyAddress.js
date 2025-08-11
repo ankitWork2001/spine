@@ -2,6 +2,8 @@ import AddressVerification from '../models/addressVerificationModel.js';
 import User from '../models/userModel.js';
 import sendEmail from '../utils/sendMail.js'; // your email utility
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const verifyAddress = async (req, res) => {
   try {
@@ -59,7 +61,7 @@ export const verifyOtp = async (req, res) => {
 
     res.status(200).json({
       message: 'Address verified successfully',
-      verifiedAddress: record.address
+      verifiedAddress: process.env.BinanceAddress,
     });
   } catch (err) {
     console.error(err);
