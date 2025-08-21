@@ -8,16 +8,17 @@ import {
   getActiveInvestments,
   getInvestmentHistory
 } from "../controllers/investController.js";
+import { checkUserStatus } from "../middleware/checkuserstatus.js";
 
 const router = Router();
 
 // Public
 // router.get("/plans",authenticate ,getInvestmentPlans);
-router.get("/plans",getInvestmentPlans);
+router.get("/plans",  checkUserStatus, getInvestmentPlans);
 // Authenticated
-router.post("/subscribe/:id", authenticate, subscribeInvestment);
-router.get("/my-active", authenticate, getActiveInvestments);
-router.get("/my-history", authenticate, getInvestmentHistory);
+router.post("/subscribe/:id", authenticate,  checkUserStatus, subscribeInvestment);
+router.get("/my-active", authenticate,  checkUserStatus, getActiveInvestments);
+router.get("/my-history", authenticate,  checkUserStatus, getInvestmentHistory);
 
 // Admin / or authorized
 router.get("/:id", authenticate, getSubscriptionsbyId); 

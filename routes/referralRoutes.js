@@ -7,6 +7,7 @@ import {
   getReferralSummary,
   getMyReferralUsedInfo,
 } from "../controllers/referralController.js";
+import { checkUserStatus } from "../middleware/checkuserstatus.js";
 
 const router = Router();
 
@@ -14,9 +15,9 @@ const router = Router();
 router.get("/", getAllReferral);
 
 // Authenticated user routes
-router.get("/code-link", authenticate, getReferralCode);
-router.get("/tree", authenticate, getReferralTree);
-router.get("/summary", authenticate, getReferralSummary);
-router.get("/my-referral-used", authenticate, getMyReferralUsedInfo);
+router.get("/code-link", authenticate, checkUserStatus, getReferralCode);
+router.get("/tree", authenticate, checkUserStatus, getReferralTree);
+router.get("/summary", authenticate, checkUserStatus, getReferralSummary);
+router.get("/my-referral-used", authenticate, checkUserStatus, getMyReferralUsedInfo);
 
 export default router;

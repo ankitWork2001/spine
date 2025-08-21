@@ -6,6 +6,7 @@ import Referral from "../models/referralModel.js";
 import Transaction from "../models/transactionModel.js";
 import Spin from "../models/spinModel.js";
 import UserInvestment from "../models/userInvestmentModel.js";
+import sendEmailBan from "../utils/sendEmailBan.js";
 
 export const createInvestmentPlan = async (req, res) => {
     try {
@@ -135,13 +136,25 @@ export const toggleUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+
     const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
+
     user.status = status;
     await user.save();
-    res.status(200).json({ success: true, message: "User status updated successfully" , user });
+
+    // ✅ If user is banned, send ban email
+    if (status === "banned") {
+      await sendEmailBan(user.email, user._id);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `User status updated to ${status}`,
+      user,
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

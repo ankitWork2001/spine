@@ -6,12 +6,13 @@ import {
   getReferralBonusHistory
 } from "../controllers/rewardController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
+import { checkUserStatus } from "../middleware/checkuserstatus.js";
 
 const router = Router();
 
-router.get("/getreward", authenticate, getRewardWallet);
-router.get("/history", authenticate, getRewardHistory);
-router.get('/referral-summary', authenticate, getMyReferralSummary);
-router.get('/ReferralBonusHistory', authenticate, getReferralBonusHistory);
+router.get("/getreward", authenticate, checkUserStatus, getRewardWallet);
+router.get("/history", authenticate, checkUserStatus, getRewardHistory);
+router.get('/referral-summary', authenticate, checkUserStatus, getMyReferralSummary);
+router.get('/ReferralBonusHistory', authenticate, checkUserStatus, getReferralBonusHistory);
 
 export default router;

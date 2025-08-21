@@ -46,7 +46,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/invest', investmentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notification', notificationRoutes);
-app.use('/api/reward', rewardRoutes); // contains /reward-wallet and /reward-history
+app.use('/api/reward', rewardRoutes);
 app.use('/api/upiVerification', upiVerificationRoutes);
 app.use('/api/addressVerify', addressVerify);
 
