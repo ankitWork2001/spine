@@ -93,14 +93,14 @@ export const withdrawFunds = async (req, res) => {
       availableBalance -= plan.lockedAmount;
     }
 
-    if (amount < 100) {
-      return res.status(400).json({ success: false, message: "Minimum withdrawal is ₹100" });
+    if (amount < 50) {
+      return res.status(400).json({ success: false, message: "Minimum withdrawal is $50" });
     }
 
     if (availableBalance < amount) {
       return res.status(400).json({
         success: false,
-        message: `Insufficient withdrawable balance. You can withdraw up to ₹${availableBalance}`,
+        message: `Insufficient withdrawable balance. You can withdraw up to ${availableBalance}`,
       });
     }
 
