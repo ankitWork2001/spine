@@ -251,8 +251,12 @@ export const handleWithdrawalApproval = async (req, res) => {
       // Handle single withdrawal toggle
       const trans = await Transaction.findById(id).populate("userId", "name email phone createdAt");
 
-      if (!trans || trans.amount <= 100) {
-        return res.status(404).json({ success: false, message: "Transaction not found or amount is less than 100" });
+      if (!trans) {
+        return res.status(404).json({ success: false, message: "Transaction not found" });
+      }
+
+      if (trans.amount < 50) {
+        return res.status(400).json({ success: false, message: "Transaction amount must be greater than 50" });
       }
 
       if (trans.type !== 'withdrawal' || trans.status !== 'pending') {
