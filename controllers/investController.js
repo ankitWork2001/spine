@@ -72,7 +72,7 @@ export const subscribeInvestment = async (req, res) => {
       startDate,
       endDate,
       status: "active",
-      lastPayoutDate: null,
+      lastPayoutDate: startDate,
     });
 
     // Referral Reward Logic
