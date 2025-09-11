@@ -40,12 +40,8 @@ cron.schedule("*/5 * * * *", async () => {
 
   if (minutesDiff >= 1 && today < endDate) {
     // Convert daily ROI into per-5-min ROI for testing
-    const dailyROI = (investment.amount * plan.roiPercent) / 100;
 
-    // In 24h, there are 288 five-minute blocks (24*60 / 5)
-    const perFiveMinROI = dailyROI / 288;
-
-    const totalROI = perFiveMinROI * minutesDiff;
+    const totalROI = (investment.amount * plan.roiPercent) / 100 * minutesDiff;
 
 
 
