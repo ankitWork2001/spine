@@ -32,6 +32,10 @@ const userInvestmentSchema = new Schema({
         type: Date,
         default: null
     },
+    earning: {
+        type: Number,
+        default: 0
+    },
 }, {
     timestamps: true
 });

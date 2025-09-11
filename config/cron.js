@@ -1,15 +1,15 @@
-import cron from 'node-cron';
-import UserInvestment from '../models/userInvestmentModel.js';
-import Wallet from '../models/walletModel.js';
-import InvestmentPlan from '../models/investmentPlanModel.js';
-import Notification from '../models/notificationModel.js';
+import cron from "node-cron";
+import UserInvestment from "../models/userInvestmentModel.js";
+import Wallet from "../models/walletModel.js";
+import InvestmentPlan from "../models/investmentPlanModel.js";
+import Notification from "../models/notificationModel.js";
 
 // Runs every 5 minutes
-cron.schedule('*/5 * * * *', async () => {
-  console.log('🔁 Running Auto Payout Job...');
+cron.schedule("*/5 * * * *", async () => {
+  console.log("🔁 Running Auto Payout Job...");
 
   try {
-    const activeInvestments = await UserInvestment.find({ status: 'active' });
+    const activeInvestments = await UserInvestment.find({ status: "active" });
 
     for (let investment of activeInvestments) {
       const plan = await InvestmentPlan.findById(investment.planId);
@@ -20,68 +20,95 @@ cron.schedule('*/5 * * * *', async () => {
       const today = new Date();
       const startDate = new Date(investment.startDate);
       const endDate = new Date(investment.endDate);
-      const lastPayout = investment.lastPayoutDate;
+      const lastPayout = investment.lastPayoutDate || startDate;
 
-      // 1️⃣ Handle autoPayout daily ROI
+      // 1️⃣ Handle autoPayout (daily ROI)
       if (plan.autoPayout) {
-        const daysDiff = Math.floor((today - lastPayout) / (1000 * 60 * 60 * 24));
-        if (daysDiff >= 1 && today < endDate) { // pay daily only before endDate
-          const dailyROI = (investment.amount * plan.roiPercent / 100) / plan.durationDays;
+        const daysDiff = Math.floor(
+          (today - lastPayout) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysDiff >= 1 && today < endDate) {
+          const dailyROI = (investment.amount * plan.roiPercent) / 100; // daily %
           const totalROI = dailyROI * daysDiff;
 
+          // Credit wallet
           userWallet.balance += totalROI;
           await userWallet.save();
 
+          // Update investment
+          investment.earning += totalROI;
+          investment.lastPayoutDate = today;
+          await investment.save();
+
+          // Notify user
+          await Notification.create({
+            userId: investment.userId,
+            message: `You received daily ROI of $${totalROI.toFixed(
+              2
+            )} for your investment.`,
+          });
+
+          console.log(
+            `✅ Credited $${totalROI.toFixed(2)} ROI to user ${
+              investment.userId
+            }`
+          );
+        }
+      }
+
+      // 2️⃣ Handle investment completion (maturity reached)
+      if (today >= endDate) {
+        if (plan.autoPayout) {
+          // Auto payout → only return principal (ROI already paid daily)
+          userWallet.balance += investment.amount;
+          userWallet.lockedBalance -= investment.amount;
+          await userWallet.save();
+
+          investment.status = "completed";
           investment.lastPayoutDate = today;
           await investment.save();
 
           await Notification.create({
             userId: investment.userId,
-            message: `You received daily ROI of $${totalROI.toFixed(2)} for your investment.`
+            message: `Your investment has matured. Principal $${investment.amount} has been credited. ROI was already paid daily.`,
           });
 
-          console.log(`✅ Credited $${totalROI.toFixed(2)} daily ROI to user ${investment.userId}`);
-        }
-      }
-
-      // 2️⃣ Handle investment completion
-      if (today >= endDate) {
-        let finalROI = 0;
-
-        if (!plan.autoPayout) {
-          // Full ROI at end for non-auto plans
-          finalROI = (investment.amount * plan.roiPercent) / 100;
+          console.log(
+            `✅ Auto plan completed: Returned principal for user ${investment.userId}`
+          );
         } else {
-          // Remaining ROI for autoPayout plans
-          const daysPaid = Math.floor((lastPayout - startDate) / (1000 * 60 * 60 * 24));
-          const totalPaidROI = (investment.amount * plan.roiPercent / 100 / plan.durationDays) * daysPaid;
-          finalROI = (investment.amount * plan.roiPercent / 100) - totalPaidROI;
+          // Non-auto payout → pay full ROI + principal at maturity
+          const finalROI = (investment.amount * plan.roiPercent) / 100;
+
+          userWallet.balance += investment.amount + finalROI;
+          userWallet.lockedBalance -= investment.amount;
+          await userWallet.save();
+
+          investment.earning += finalROI;
+          investment.status = "completed";
+          investment.lastPayoutDate = today;
+          await investment.save();
+
+          await Notification.create({
+            userId: investment.userId,
+            message: `Your investment matured. Principal $${
+              investment.amount
+            } + ROI $${finalROI.toFixed(2)} have been credited.`,
+          });
+
+          console.log(
+            `✅ Non-auto plan completed: Credited principal + ROI for user ${investment.userId}`
+          );
         }
-
-        userWallet.balance += investment.amount + finalROI; // unlock principal + remaining ROI
-        userWallet.lockedBalance -= investment.amount;
-        await userWallet.save();
-
-        investment.status = 'completed';
-        investment.lastPayoutDate = today;
-        await investment.save();
-
-        await Notification.create({
-          userId: investment.userId,
-          message: `Your investment plan has completed. ROI of $${finalROI.toFixed(2)} and your principal $${investment.amount} have been credited.`
-        });
-
-        console.log(`✅ Investment completed for user ${investment.userId}`);
       }
     }
 
-    console.log('✅ Auto payout job finished.');
+    console.log("✅ Auto payout job finished.");
   } catch (error) {
-    console.error('❌ Error in auto payout job:', error.message);
+    console.error("❌ Error in auto payout job:", error.message);
   }
 });
-
-
 
 // import cron from 'node-cron';
 // import UserInvestment from '../models/userInvestmentModel.js';
@@ -107,7 +134,7 @@ cron.schedule('*/5 * * * *', async () => {
 
 //       if (today >= endDate) {
 //        const roiAmount = (investment.amount * plan.roiPercent) / 100;
-       
+
 //         userWallet.balance += roiAmount;
 //         userWallet.lockedBalance -= investment.amount;
 //         userWallet.balance += investment.amount;
