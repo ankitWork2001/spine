@@ -4,8 +4,8 @@ import Wallet from '../models/walletModel.js';
 import InvestmentPlan from '../models/investmentPlanModel.js';
 import Notification from '../models/notificationModel.js';
 
-// Runs every day at midnight
-cron.schedule('*/5 * * * *', async () => { // every 5 minutes
+// Runs every 5 minutes
+cron.schedule('*/5 * * * *', async () => {
   console.log('🔁 Running Auto Payout Job...');
 
   try {
