@@ -24,27 +24,13 @@ cron.schedule("*/5 * * * *", async () => {
 
       // 1️⃣ Handle autoPayout (daily ROI)
       if (plan.autoPayout) {
-        // const daysDiff = Math.floor(
-        //   (today - lastPayout) / (1000 * 60 * 60 * 24)
-        // );
+        const daysDiff = Math.floor(
+          (today - lastPayout) / (1000 * 60 * 60 * 24)
+        );
 
-        // if (daysDiff >= 1 && today < endDate) {
-        //   const dailyROI = (investment.amount * plan.roiPercent) / 100; // daily %
-        //   const totalROI = dailyROI * daysDiff;
-
-
-//for testing every 5 minutes
-          const minutesDiff = Math.floor(
-    (today - lastPayout) / (1000 * 60 * 5) // difference in 5-minute blocks
-  );
-
-  if (minutesDiff >= 1 && today < endDate) {
-    // Convert daily ROI into per-5-min ROI for testing
-
-    const totalROI = (investment.amount * plan.roiPercent) / 100 * minutesDiff;
-
-
-
+        if (daysDiff >= 1 && today < endDate) {
+          const dailyROI = (investment.amount * plan.roiPercent) / 100; // daily %
+          const totalROI = dailyROI * daysDiff;
 
           // Credit wallet
           userWallet.balance += totalROI;
