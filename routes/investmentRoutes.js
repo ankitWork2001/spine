@@ -13,8 +13,8 @@ import { checkUserStatus } from "../middleware/checkuserstatus.js";
 const router = Router();
 
 // Public
-// router.get("/plans",authenticate ,getInvestmentPlans);
-router.get("/plans",authenticate,  checkUserStatus, getInvestmentPlans);
+router.get("/plans", getInvestmentPlans);
+// router.get("/plans", authenticate, checkUserStatus, getInvestmentPlans);
 // Authenticated
 router.post("/subscribe/:id", authenticate,  checkUserStatus, subscribeInvestment);
 router.get("/my-active", authenticate,  checkUserStatus, getActiveInvestments);
