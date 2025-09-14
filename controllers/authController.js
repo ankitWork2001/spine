@@ -15,18 +15,21 @@ export const signup = async (req, res) => {
   try {
     const { name, username, email, password, mobile, role, referralCode } = req.body;
 
+    // check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists" });
     }
 
-    if (role === 'admin') {
-      const existingAdmin = await User.findOne({ role: 'admin' });
+    // allow only one admin
+    if (role === "admin") {
+      const existingAdmin = await User.findOne({ role: "admin" });
       if (existingAdmin) {
-        return res.status(400).json({ error: 'An admin already exists. Only one admin is allowed.' });
+        return res.status(400).json({ error: "An admin already exists. Only one admin is allowed." });
       }
     }
 
+    // create user
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const newUser = await User.create({
       name,
@@ -38,82 +41,69 @@ export const signup = async (req, res) => {
       code,
     });
 
+    // create wallets
     await Wallet.create({ userId: newUser._id });
     await RewardWallet.create({ userId: newUser._id });
 
+    // referral system
     if (referralCode) {
       const referrer = await User.findOne({ code: referralCode });
-
       if (referrer) {
-        try {
-          await Referral.create({
-            referredBy: referrer._id,
-            referredUser: newUser._id,
-            commissionPercent: 10,
-            isCommissionGiven: false,
-          });
-        } catch (referralError) {
-          console.error("Referral creation error:", referralError);
-          return res.status(500).json({
-            success: false,
-            message: "User created but referral failed",
-            error: referralError.message,
-          });
-        }
+        Referral.create({
+          referredBy: referrer._id,
+          referredUser: newUser._id,
+          commissionPercent: 10,
+          isCommissionGiven: false,
+        }).catch((err) => console.error("Referral creation error:", err.message));
       }
     }
-    const OptionMail = {
-  from: process.env.SENDER_EMAIL,
-  to: email,
-  subject: '🎉 Welcome to Spin App!',
-  html: `
-    <div style="font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0d1117; padding: 40px; color: #f0f0f0;">
-  <div style="max-width: 600px; margin: auto; background-color: #161b22; border: 2px solid #ffd700; border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);">
 
-    <h1 style="color: #ffd700; font-size: 28px; margin-bottom: 10px;">🎉 Welcome to Spin & Win!</h1>
-    <p style="font-size: 16px; color: #dcdcdc;">
-      Hello <strong>${name || "Investor"}</strong>,
-    </p>
-
-    <p style="font-size: 15px; margin-top: 20px; line-height: 1.8;">
-      🌀 You’ve just entered the world of <strong>luck, strategy, and wealth!</strong><br/>
-      🎯 Spin the wheel to earn rewards<br/>
-      💼 Invest your winnings to grow your empire<br/>
-      🏆 Climb the leaderboard and become a 💸 <strong>Money Master</strong>
-    </p>
-
-    <div style="margin: 30px 0;">
-      <img src="https://media.giphy.com/media/26n6WywJyh39n1pBu/giphy.gif" alt="Spin & Win" style="width: 180px; border-radius: 10px;" />
-    </div>
-
-    <p style="font-size: 14px; color: #aaaaaa;">
-      This isn’t just a game — it’s your path to virtual riches.<br/>
-      Spin daily, invest smartly, and watch your coins multiply. 🔄💹
-    </p>
-
-    <p style="font-size: 13px; color: #555; margin-top: 40px;">
-      🔒 Tip: Luck favors the bold. But wisdom builds the kingdom. Choose wisely.
-    </p>
-
-  </div>
-
-  <p style="text-align: center; font-size: 11px; color: #999; margin-top: 25px;">
-    © ${new Date().getFullYear()} Spin & Earn Inc. • All spins are fair. All dreams are welcome.
-  </p>
-</div>
-
-  `
-};
-
-
-    await transporter.sendMail(OptionMail)
-
-    return res.status(201).json({
+    // ✅ Respond immediately (fast)
+    res.status(201).json({
       success: true,
       message: "Signup successful",
       token: generateToken(newUser._id),
     });
 
+    // 📩 Send email in background (non-blocking)
+    const OptionMail = {
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "🎉 Welcome to Spin App!",
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0d1117; padding: 40px; color: #f0f0f0;">
+          <div style="max-width: 600px; margin: auto; background-color: #161b22; border: 2px solid #ffd700; border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);">
+            <h1 style="color: #ffd700; font-size: 28px; margin-bottom: 10px;">🎉 Welcome to Spin & Win!</h1>
+            <p style="font-size: 16px; color: #dcdcdc;">
+              Hello <strong>${name || "Investor"}</strong>,
+            </p>
+            <p style="font-size: 15px; margin-top: 20px; line-height: 1.8;">
+              🌀 You’ve just entered the world of <strong>luck, strategy, and wealth!</strong><br/>
+              🎯 Spin the wheel to earn rewards<br/>
+              💼 Invest your winnings to grow your empire<br/>
+              🏆 Climb the leaderboard and become a 💸 <strong>Money Master</strong>
+            </p>
+            <div style="margin: 30px 0;">
+              <img src="https://media.giphy.com/media/26n6WywJyh39n1pBu/giphy.gif" alt="Spin & Win" style="width: 180px; border-radius: 10px;" />
+            </div>
+            <p style="font-size: 14px; color: #aaaaaa;">
+              This isn’t just a game — it’s your path to virtual riches.<br/>
+              Spin daily, invest smartly, and watch your coins multiply. 🔄💹
+            </p>
+            <p style="font-size: 13px; color: #555; margin-top: 40px;">
+              🔒 Tip: Luck favors the bold. But wisdom builds the kingdom. Choose wisely.
+            </p>
+          </div>
+          <p style="text-align: center; font-size: 11px; color: #999; margin-top: 25px;">
+            © ${new Date().getFullYear()} Spin & Earn Inc. • All spins are fair. All dreams are welcome.
+          </p>
+        </div>
+      `,
+    };
+
+    transporter.sendMail(OptionMail).catch((err) =>
+      console.error("Email sending failed:", err.message)
+    );
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
