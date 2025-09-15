@@ -2,7 +2,7 @@
 import UpiVerification from "../models/UpiVerification.js";
 import User from "../models/userModel.js";
 import crypto from "crypto";
-import sendMail from "../utils/sendMail.js";
+import sendEmail from "../utils/sendMail.js";
 
 export const requestUpiVerification = async (req, res) => {
   try {
@@ -21,7 +21,7 @@ export const requestUpiVerification = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    await sendMail(user.email, "Your Binance OTP", `Your Binance OTP is: ${otp}`);
+    await sendEmail(user.email, "Your Binance OTP", `Your Binance OTP is: ${otp}`);
 
     return res.status(200).json({ message: "Binance OTP sent to your email" });
 
