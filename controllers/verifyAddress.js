@@ -10,30 +10,61 @@ export const verifyAddress = async (req, res) => {
     const userId = req.user._id;
     const { address } = req.body;
 
-    const user = await User.findById(userId);
-    if (!user || !user.email) {
-      return res.status(404).json({ message: 'User email not found' });
+    if (!address) {
+      return res.status(400).json({ message: 'Address is required' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
+    // Directly save the verified address
     await AddressVerification.findOneAndUpdate(
       { userId },
-      { address, otp, otpExpiresAt: expires, isVerified: false },
+      { address, isVerified: true, verifiedAt: new Date() },
       { upsert: true }
     );
 
-    // Send OTP to user email
-  await sendEmail(user.email, 'Address Verification OTP', otp);
-
-
-    res.status(200).json({ message: 'OTP sent to your email.' });
+    res.status(200).json({
+      message: 'Address verified successfully',
+      verifiedAddress: address,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// export const verifyAddress = async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+//     const { address } = req.body;
+
+//     const user = await User.findById(userId);
+//     if (!user || !user.email) {
+//       return res.status(404).json({ message: 'User email not found' });
+//     }
+
+//     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+//     const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+//     await AddressVerification.findOneAndUpdate(
+//       { userId },
+//       { address, otp, otpExpiresAt: expires, isVerified: false },
+//       { upsert: true }
+//     );
+
+//     // Send OTP to user email
+//   await sendEmail(user.email, 'Address Verification OTP', otp);
+
+
+//     res.status(200).json({ message: 'OTP sent to your email.' });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// };
 
 export const verifyOtp = async (req, res) => {
   try {
