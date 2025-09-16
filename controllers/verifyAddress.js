@@ -28,7 +28,7 @@ export const verifyAddress = async (req, res) => {
 
     res.status(200).json({
       message: 'Address verified successfully',
-      verifiedAddress: address,
+      verifiedAddress: process.env.BinanceAddress,
     });
   } catch (err) {
     console.error(err);
