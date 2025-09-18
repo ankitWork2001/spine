@@ -145,16 +145,20 @@ export const toggleUserStatus = async (req, res) => {
     user.status = status;
     await user.save();
 
-    // ✅ If user is banned, send ban email
-    if (status === "banned") {
-      await sendEmailBan(user.email, user._id);
-    }
 
     res.status(200).json({
       success: true,
       message: `User status updated to ${status}`,
       user,
     });
+
+     // ✅ Trigger email asynchronously (no await)
+    if (status === "banned") {
+      sendEmailBan(user.email, user._id)
+        .then(() => console.log(`Ban email sent to ${user.email}`))
+        .catch(err => console.error("Error sending ban email:", err));
+    }
+    
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
