@@ -22,7 +22,7 @@ router.get('/users', authenticate, checkAdmin,  adminlogic.getAllUsers);
 
 router.get('/user/:id',authenticate, checkAdmin,  adminlogic.getUser);
 
-router.post('/user/:id/ban', authenticate, checkAdmin,  adminlogic.toggleUserStatus );
+router.put('/user/:id/status', authenticate, checkAdmin,  adminlogic.toggleUserStatus );
 
 router.put('/depositstatus/:id', authenticate, checkAdmin,  adminlogic.handleDepositApproval);
 
