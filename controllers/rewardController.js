@@ -3,6 +3,7 @@ import ReferralTransaction from "../models/referralTransactionModel.js";
 import User from "../models/userModel.js";
 import mongoose from "mongoose";
 import Referral from "../models/referralModel.js";
+import Wallet from "../models/walletModel.js";
 import Spin from "../models/spinModel.js"; 
 
 
@@ -128,3 +129,61 @@ export const getReferralBonusHistory = async (req, res) => {
     });
   }
 };
+
+export const withdrawRewardBalance = async (req, res) => {
+  const session = await RewardWallet.startSession();
+  session.startTransaction();
+
+  try {
+    const userId = req.userId;
+
+    const rewardWallet = await RewardWallet.findOne({ userId }).session(session);
+    if (!rewardWallet) {
+      return res.status(404).json({ success: false, message: "Reward wallet not found" });
+    }
+
+    const rewardBalance = rewardWallet.balance;
+    if (rewardBalance <= 0) {
+      return res.status(400).json({ success: false, message: "No reward balance to withdraw" });
+    }
+
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    let userWallet = await Wallet.findOne({ userId }).session(session);
+    if (!userWallet) {
+      userWallet = new Wallet({ userId, balance: 0 });
+    }
+
+    // Transfer rewards
+    userWallet.balance += rewardBalance;
+    rewardWallet.balance = 0;
+
+    await userWallet.save({ session });
+    await rewardWallet.save({ session });
+
+    // Optional: Log transaction
+    // await new Transaction({
+    //   userId,
+    //   type: "RewardWithdrawal",
+    //   amount: rewardBalance,
+    //   status: "completed",
+    // }).save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully withdrew $${rewardBalance} to main wallet`,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("❌ Error in withdraw Reward Balance:", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+};
+
