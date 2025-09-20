@@ -413,7 +413,7 @@ export const getSpinCount = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      spinCount: user.spinCount,
+      spin:{count: user.spinCount, dailySpinCount: user.dailySpinCount, lastSpinDate: user.lastSpinDate},
       message: "Spins available",
     });
   } catch (error) {
