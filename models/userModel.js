@@ -60,6 +60,14 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
+    dailySpinCount: {
+      type: Number,
+      default: 0,
+    },
+    lastSpinDate: {
+      type: Date,
+      default: null,
+    },
     code: {
       type: String,
       default: null,
@@ -95,5 +103,5 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-export const User = mongoose.models.User || mongoose.model('User', userSchema);
+export const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;
