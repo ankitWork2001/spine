@@ -392,67 +392,28 @@ export const getSpinLogs = async (req, res) => {
   }
 };
 
-// export const getSpinCount = async (req, res) => {
-//   try {
-//     const userId = req.userId;
-//     const user = await User.findById(userId);
-
-//     if (!user) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "User not found" });
-//     }
-
-//     if (user.spinCount === 0) {
-//       return res.status(200).json({
-//         success: true,
-//         spinCount: 0,
-//         message: "No spins available",
-//       });
-//     }
-
-//     res.status(200).json({
-//       success: true,
-//       spin:{spinCount: user.spinCount, dailySpinCount: user.dailySpinCount, lastSpinDate: user.lastSpinDate},
-//       message: "Spins available",
-//     });
-//   } catch (error) {
-//     console.error("❌ Error in getSpinCount:", error);
-//     res.status(500).json({ success: false, error: "Internal Server Error" });
-//   }
-// };
-
-
 export const getSpinCount = async (req, res) => {
   try {
     const userId = req.userId;
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    // Calculate next reset time (midnight)
-    const now = new Date();
-    const nextMidnight = new Date(now);
-    nextMidnight.setHours(24, 0, 0, 0); // next 12:00 AM
-
-    // Reset daily spins if lastSpinDate is not today
-    const today = now.toDateString();
-    if (!user.lastSpinDate || user.lastSpinDate !== today) {
-      user.dailySpinCount = 5; // reset daily limit
-      user.lastSpinDate = today;
-      await user.save();
+    if (user.spinCount === 0) {
+      return res.status(200).json({
+        success: true,
+        spinCount: 0,
+        message: "No spins available",
+      });
     }
 
     res.status(200).json({
       success: true,
-      spin: {
-        spinCount: user.spinCount,
-        dailySpinCount: user.dailySpinCount,
-        lastSpinDate: user.lastSpinDate,
-        spinOpenAt: nextMidnight, // everyone’s next spin reset time
-      },
+      spin:{spinCount: user.spinCount, dailySpinCount: user.dailySpinCount},
       message: "Spins available",
     });
   } catch (error) {
@@ -460,4 +421,3 @@ export const getSpinCount = async (req, res) => {
     res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
-
