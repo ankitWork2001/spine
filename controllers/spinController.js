@@ -89,7 +89,7 @@ export const playSpin2 = async (req, res) => {
     if (user.dailySpinCount >= 5) {
       return res.status(400).json({
         success: false,
-        message: "Daily spin limit reached (Max 5 spins per day).",
+        message: "Daily 5 spins limit reached.\nNew spins available at 12:00 AM IST.",
       });
     }
 
