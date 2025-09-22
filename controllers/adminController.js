@@ -73,7 +73,7 @@ export const getAllUserInvestments = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({ role: "user" });
+    const users = await User.find({ role: "user" }).sort({ createdAt: -1 });
 
     const enrichedUsers = await Promise.all(
       users.map(async (user) => {
@@ -433,7 +433,7 @@ export const updateInvestmentPlan = async (req, res) => {
 export const getSpinLogs = async (req, res) => {
   try {
     const spins = await Spin.find()
-      .populate("userId", "name username email role status")
+      .populate("userId", "name username email role status").sort({ createdAt: -1 })
       .exec();
     if (!spins || spins.length === 0) {
       return res
