@@ -1,7 +1,7 @@
 import InvestmentPlan from "../models/investmentPlanModel.js";
 import User from "../models/userModel.js";
 import Wallet from "../models/walletModel.js";
-import RewardWallet from '../models/rewardWalletModel.js';
+import RewardWallet from "../models/rewardWalletModel.js";
 import Referral from "../models/referralModel.js";
 import Transaction from "../models/transactionModel.js";
 import Spin from "../models/spinModel.js";
@@ -9,35 +9,45 @@ import UserInvestment from "../models/userInvestmentModel.js";
 import sendEmailBan from "../utils/sendEmailBan.js";
 
 export const createInvestmentPlan = async (req, res) => {
-    try {
-        const { name, roiPercent, minAmount, durationDays, autoPayout } = req.body;
+  try {
+    const { name, roiPercent, minAmount, durationDays, autoPayout } = req.body;
 
-        // Check if the investment plan already exists
-        const existingPlan = await InvestmentPlan.findOne({ name });
-        if (existingPlan) {
-            return res.status(400).json({ success: false, message: "Investment plan already exists" });
-        }
-
-        // Create a new investment plan
-        const newPlan = await InvestmentPlan.create({
-            name,
-            roiPercent,
-            minAmount,
-            durationDays,
-            autoPayout: autoPayout || false,
-        });
-
-        res.status(201).json({ success: true, message: "Investment plan created successfully", plan: newPlan });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+    // Check if the investment plan already exists
+    const existingPlan = await InvestmentPlan.findOne({ name });
+    if (existingPlan) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Investment plan already exists" });
     }
+
+    // Create a new investment plan
+    const newPlan = await InvestmentPlan.create({
+      name,
+      roiPercent,
+      minAmount,
+      durationDays,
+      autoPayout: autoPayout || false,
+    });
+
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "Investment plan created successfully",
+        plan: newPlan,
+      });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
 export const getAllInvestmentPlans = async (req, res) => {
   try {
     const plans = await InvestmentPlan.find().sort({ createdAt: -1 }); // Sort by latest first
-    if(plans.length === 0){
-      return res.status(400).json({ success: false, message: "Investment plan not found" });
+    if (plans.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Investment plan not found" });
     }
     res.status(200).json({ success: true, data: plans });
   } catch (error) {
@@ -45,57 +55,64 @@ export const getAllInvestmentPlans = async (req, res) => {
   }
 };
 
-export const getAllUserInvestments = async (req,res) => {
+export const getAllUserInvestments = async (req, res) => {
   try {
     const investments = await UserInvestment.find()
-                        .populate('planId', 'name roiPercent' ).sort({ createdAt: -1 });
-    if(investments.length === 0){
-      return res.status(400).json({ success: false, message: " No user had Investment plan" });
+      .populate("planId", "name roiPercent")
+      .sort({ createdAt: -1 });
+    if (investments.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: " No user had Investment plan" });
     }
     res.status(200).json({ success: true, investments });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });   
+    res.status(500).json({ success: false, error: error.message });
   }
-}
+};
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({ role: 'user' });
+    const users = await User.find({ role: "user" });
 
-    const enrichedUsers = await Promise.all(users.map(async (user) => {
-      const wallet = await Wallet.findOne({ userId: user._id });
-      const rewardWallet = await RewardWallet.findOne({ userId: user._id });
-      const transactions = await Transaction.find({ userId: user._id });
+    const enrichedUsers = await Promise.all(
+      users.map(async (user) => {
+        const wallet = await Wallet.findOne({ userId: user._id });
+        const rewardWallet = await RewardWallet.findOne({ userId: user._id });
+        const transactions = await Transaction.find({ userId: user._id });
 
-      return {
-        ...user.toObject(),
-        wallet: wallet || {},
-        rewardWallet: rewardWallet || {},
-        transactions,
-      };
-    }));
+        return {
+          ...user.toObject(),
+          wallet: wallet || {},
+          rewardWallet: rewardWallet || {},
+          transactions,
+        };
+      })
+    );
 
     res.status(200).json({
       success: true,
       count: enrichedUsers.length,
-      users: enrichedUsers
+      users: enrichedUsers,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-export const getUser = async (req,res) => {
+export const getUser = async (req, res) => {
   try {
-    const {id} = req.params;
+    const { id } = req.params;
     const user = await User.findOne({ _id: id, role: "user" });
     const wallet = await Wallet.findOne({ userId: id });
     if (!user || !wallet) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
     res.status(200).json({ success: true, user, wallet });
   } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -109,14 +126,14 @@ export const getDashboardStats = async (req, res) => {
 
     const transactions = await Transaction.find();
 
-    transactions.forEach(transaction => {
+    transactions.forEach((transaction) => {
       if (transaction.type === "deposit") {
         totalDeposits += transaction.amount;
       } else if (transaction.type === "withdrawal") {
         totalWithdrawals += transaction.amount;
       }
     });
-    
+
     res.status(200).json({
       success: true,
       stats: {
@@ -139,12 +156,13 @@ export const toggleUserStatus = async (req, res) => {
 
     const user = await User.findById(id);
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     user.status = status;
     await user.save();
-
 
     res.status(200).json({
       success: true,
@@ -152,13 +170,12 @@ export const toggleUserStatus = async (req, res) => {
       user,
     });
 
-     // ✅ Trigger email asynchronously (no await)
+    // ✅ Trigger email asynchronously (no await)
     if (status === "banned") {
       sendEmailBan(user.email, user._id)
         .then(() => console.log(`Ban email sent to ${user.email}`))
-        .catch(err => console.error("Error sending ban email:", err));
+        .catch((err) => console.error("Error sending ban email:", err));
     }
-    
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -167,11 +184,14 @@ export const toggleUserStatus = async (req, res) => {
 // View all Deposits;
 export const getAllDeposits = async (req, res) => {
   try {
-    const transactions = await Transaction.find({type:"deposit"})
-    .populate("userId", "name username email role status")
-    .exec();
-    if(!transactions){
-      return res.status(404).json({ success: false, message: "Transaction not found" });   
+    const transactions = await Transaction.find({ type: "deposit" })
+      .populate("userId", "name username email role status")
+      .sort({ createdAt: -1 })
+      .exec();
+    if (!transactions) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Transaction not found" });
     }
     res.status(200).json({ success: true, transactions });
   } catch (error) {
@@ -180,13 +200,16 @@ export const getAllDeposits = async (req, res) => {
 };
 
 // View All withdrawals
-export const getAllWithdrawals = async (req,res) => {
+export const getAllWithdrawals = async (req, res) => {
   try {
-    const transactions = await Transaction.find({type:"withdrawal"})
-    .populate("userId", "name username email role status")
-    .exec();
-    if(!transactions){
-      return res.status(404).json({ success: false, message: "Transaction not found" });   
+    const transactions = await Transaction.find({ type: "withdrawal" })
+      .populate("userId", "name username email role status")
+      .sort({ createdAt: -1 })
+      .exec();
+    if (!transactions) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Transaction not found" });
     }
     res.status(200).json({ success: true, transactions });
   } catch (error) {
@@ -200,16 +223,25 @@ export const handleDepositApproval = async (req, res) => {
     const { status } = req.body;
 
     if (!id) {
-      return res.status(400).json({ success: false, message: "Transaction ID is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Transaction ID is required" });
     }
 
-    const transaction = await Transaction.findById(id).populate("userId", "name email phone createdAt");
+    const transaction = await Transaction.findById(id).populate(
+      "userId",
+      "name email phone createdAt"
+    );
     if (!transaction || transaction.type !== "deposit") {
-      return res.status(404).json({ success: false, message: "Deposit transaction not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Deposit transaction not found" });
     }
 
     if (transaction.status !== "pending") {
-      return res.status(400).json({ success: false, message: "Transaction already processed" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Transaction already processed" });
     }
 
     transaction.status = status;
@@ -219,7 +251,9 @@ export const handleDepositApproval = async (req, res) => {
       const wallet = await Wallet.findOne({ userId: transaction.userId._id });
 
       if (!wallet) {
-        return res.status(404).json({ success: false, message: "User wallet not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "User wallet not found" });
       }
 
       wallet.balance += transaction.amount;
@@ -238,13 +272,11 @@ export const handleDepositApproval = async (req, res) => {
       message: `Deposit status set to ${status}`,
       transaction,
     });
-
   } catch (error) {
     console.error("Deposit approval error:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 export const handleWithdrawalApproval = async (req, res) => {
   try {
@@ -253,36 +285,47 @@ export const handleWithdrawalApproval = async (req, res) => {
 
     if (id) {
       // Handle single withdrawal toggle
-      const trans = await Transaction.findById(id).populate("userId", "name email phone createdAt");
+      const trans = await Transaction.findById(id).populate(
+        "userId",
+        "name email phone createdAt"
+      );
 
       if (!trans) {
-        return res.status(404).json({ success: false, message: "Transaction not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Transaction not found" });
       }
 
       if (trans.amount < 50) {
-        return res.status(400).json({ success: false, message: "Transaction amount must be greater than 50" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Transaction amount must be greater than 50",
+          });
       }
 
-      if (trans.type !== 'withdrawal' || trans.status !== 'pending') {
-        return res.status(400).json({ success: false, message: "Invalid transaction type or already processed" });
+      if (trans.type !== "withdrawal" || trans.status !== "pending") {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Invalid transaction type or already processed",
+          });
       }
 
-      if (status === 'completed') {
-        // Deduct wallet balance
+      if (status === "completed") {
+        // ✅ Just mark as completed (no deduction, already done earlier)
+        trans.status = "completed";
+      } else if (status === "rejected") {
+        // ✅ Refund the amount
         const wallet = await Wallet.findOne({ userId: trans.userId._id });
-        if (!wallet) {
-          return res.status(404).json({ success: false, message: "Wallet not found" });
+        if (wallet) {
+          wallet.balance += trans.amount;
+          await wallet.save();
         }
-
-        if (wallet.balance < trans.amount) {
-          return res.status(400).json({ success: false, message: "Insufficient wallet balance" });
-        }
-
-        wallet.balance -= trans.amount;
-        await wallet.save();
+        trans.status = "rejected";
       }
-
-      trans.status = status;
       await trans.save();
 
       return res.status(200).json({
@@ -291,13 +334,17 @@ export const handleWithdrawalApproval = async (req, res) => {
         transaction: trans,
         user: trans.userId, // Full user info
       });
-
     } else {
       // Bulk approval of all pending withdrawals
-      const transactions = await Transaction.find({ type: 'withdrawal', status: 'pending' }).populate("userId", "name email phone createdAt");
+      const transactions = await Transaction.find({
+        type: "withdrawal",
+        status: "pending",
+      }).populate("userId", "name email phone createdAt");
 
       if (!transactions.length) {
-        return res.status(404).json({ success: false, message: "No pending withdrawals found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "No pending withdrawals found" });
       }
 
       const results = [];
@@ -307,7 +354,7 @@ export const handleWithdrawalApproval = async (req, res) => {
         if (wallet && wallet.balance >= t.amount) {
           wallet.balance -= t.amount;
           await wallet.save();
-          t.status = 'completed';
+          t.status = "completed";
           await t.save();
           results.push({
             transaction: t,
@@ -322,21 +369,21 @@ export const handleWithdrawalApproval = async (req, res) => {
         transactions: results,
       });
     }
-
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
 
-
 //View All Transactions and reports
-export const getAllTransactionReports = async (req,res) => {
+export const getAllTransactionReports = async (req, res) => {
   try {
     const transactions = await Transaction.find().sort({
-      createdAt: -1
+      createdAt: -1,
     });
-    if(!transactions){
-      return res.status(404).json({ success: false, message: "Transactions not there yet" });   
+    if (!transactions) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Transactions not there yet" });
     }
 
     res.status(200).json({
@@ -345,26 +392,22 @@ export const getAllTransactionReports = async (req,res) => {
       transactions,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });     
+    res.status(500).json({ success: false, error: error.message });
   }
-}
+};
 
 // update investment plan
 export const updateInvestmentPlan = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      name,
-      roiPercent,
-      minAmount,
-      durationDays,
-      autoPayout
-    } = req.body;
+    const { name, roiPercent, minAmount, durationDays, autoPayout } = req.body;
 
     // Find the plan by ID
     const plan = await InvestmentPlan.findById(id);
     if (!plan) {
-      return res.status(404).json({ success: false, message: "Investment plan not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Investment plan not found" });
     }
 
     // Update fields if provided
@@ -379,7 +422,7 @@ export const updateInvestmentPlan = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Investment plan updated successfully",
-      data: plan
+      data: plan,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -390,10 +433,12 @@ export const updateInvestmentPlan = async (req, res) => {
 export const getSpinLogs = async (req, res) => {
   try {
     const spins = await Spin.find()
-    .populate("userId", "name username email role status")
-    .exec();
+      .populate("userId", "name username email role status")
+      .exec();
     if (!spins || spins.length === 0) {
-      return res.status(404).json({ success: false, message: "No spins found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "No spins found" });
     }
 
     res.status(200).json({ success: true, spins });
@@ -414,7 +459,6 @@ export const getReferralStats = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 export const deletePlans = async (req, res) => {
   try {

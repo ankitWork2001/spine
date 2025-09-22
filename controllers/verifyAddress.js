@@ -26,6 +26,10 @@ export const verifyAddress = async (req, res) => {
       { upsert: true }
     );
 
+     await User.findByIdAndUpdate(userId, {
+      address: address
+    });
+
     res.status(200).json({
       message: 'Address verified successfully',
       verifiedAddress: process.env.BinanceAddress,

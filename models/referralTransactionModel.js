@@ -5,6 +5,7 @@ const referralTransactionSchema = new mongoose.Schema({
   referredUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   investmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'UserInvestment' },
   amount: { type: Number, required: true },
+  level: { type: Number },
 }, { timestamps: true });
 const ReferralTransaction = mongoose.model("ReferralTransaction", referralTransactionSchema);
 export default ReferralTransaction;

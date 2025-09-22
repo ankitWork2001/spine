@@ -6,6 +6,7 @@ import {
   getReferralTree,
   getReferralSummary,
   getMyReferralUsedInfo,
+  getSubReferralsByDirectReferral
 } from "../controllers/referralController.js";
 import { checkUserStatus } from "../middleware/checkuserstatus.js";
 
@@ -19,5 +20,7 @@ router.get("/code-link", authenticate, checkUserStatus, getReferralCode);
 router.get("/tree", authenticate, checkUserStatus, getReferralTree);
 router.get("/summary", authenticate, checkUserStatus, getReferralSummary);
 router.get("/my-referral-used", authenticate, checkUserStatus, getMyReferralUsedInfo);
+
+router.get("/getSubReferralsByDirectReferral/:directReferralId", authenticate, checkUserStatus, getSubReferralsByDirectReferral);
 
 export default router;

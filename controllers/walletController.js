@@ -104,6 +104,11 @@ export const withdrawFunds = async (req, res) => {
       });
     }
 
+     // ✅ Deduct amount from wallet immediately
+    wallet.balance -= amount;
+    await wallet.save();
+
+
     await Transaction.create({
       userId,
       type: "withdrawal",
