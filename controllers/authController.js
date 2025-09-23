@@ -66,11 +66,16 @@ export const signup = async (req, res) => {
     });
 
     // 📩 Send email in background (non-blocking)
-    const OptionMail = {
-      from: process.env.SENDER_EMAIL,
-      to: email,
+    // 📩 Send welcome email using Brevo API (non-blocking)
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    defaultClient.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail({
+      sender: { email: process.env.SENDER_EMAIL, name: "Spin App" },
+      to: [{ email }],
       subject: "🎉 Welcome to Spin App!",
-      html: `
+      htmlContent: `
         <div style="font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0d1117; padding: 40px; color: #f0f0f0;">
           <div style="max-width: 600px; margin: auto; background-color: #161b22; border: 2px solid #ffd700; border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);">
             <h1 style="color: #ffd700; font-size: 28px; margin-bottom: 10px;">🎉 Welcome to Spin & Win!</h1>
@@ -99,11 +104,11 @@ export const signup = async (req, res) => {
           </p>
         </div>
       `,
-    };
+    });
 
-    transporter.sendMail(OptionMail).catch((err) =>
-      console.error("Email sending failed:", err.message)
-    );
+    apiInstance.sendTransacEmail(sendSmtpEmail)
+      .then((response) => console.log("✅ Welcome email sent:", response))
+      .catch((err) => console.error("❌ Welcome email failed:", err));
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
