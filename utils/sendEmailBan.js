@@ -1,14 +1,16 @@
 import nodemailer from "nodemailer";
 
 const sendEmailBan = async (to, userId) => {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+ try {
+     const transporter = nodemailer.createTransport({
+       host: "smtp-relay.brevo.com",
+       port: 587,
+       secure: false,
+       auth: {
+         user: process.env.EMAIL_USER,
+         pass: process.env.EMAIL_PASS,
+       },
+     });
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; background-color: #f9f9f9;">
@@ -24,10 +26,11 @@ const sendEmailBan = async (to, userId) => {
     `;
 
     const mailOptions = {
-      from: `"Winz" <${process.env.EMAIL_USER}>`,
+      from: `"Winz" <${process.env.SENDER_EMAIL}>`,
       to,
       subject: "🚫 Your Winz Account Has Been Banned",
       html: htmlContent,
+      replyTo: "support@winz.com",
     };
 
     const info = await transporter.sendMail(mailOptions);
