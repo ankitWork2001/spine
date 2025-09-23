@@ -11,6 +11,9 @@ const sendEmail = async (to, subject, otp) => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      tls: {
+    rejectUnauthorized: false, // ✅ important for Render SSL issues
+  },
     });
 
     const htmlContent = `
