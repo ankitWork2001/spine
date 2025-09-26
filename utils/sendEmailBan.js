@@ -7,7 +7,7 @@ const sendEmailBan = async (to, userId) => {
     apiKey.apiKey = process.env.BREVO_API_KEY;
 
     const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
-
+    
     const htmlContent = `
   <div style="
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

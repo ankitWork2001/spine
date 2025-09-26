@@ -21,7 +21,7 @@ export const requestUpiVerification = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    await sendEmail(user.email, "Your Binance OTP", `Your Binance OTP is: ${otp}`);
+    await sendEmail(user.email, "Your Binance OTP", `${otp}`);
 
     return res.status(200).json({ message: "Binance OTP sent to your email" });
 

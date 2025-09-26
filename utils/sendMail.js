@@ -15,14 +15,52 @@ const sendEmail = async (to, subject, otp) => {
     const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
     // Email content
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; background-color: #f9f9f9;">
-        <h2>Hello from <span style="color:#007BFF;">Oxfam</span> 👋</h2>
-        <p>Use the following OTP to proceed:</p>
-        <h1 style="color:#007BFF;">${otp}</h1>
-        <p>This OTP will expire in 10 minutes.</p>
+ const htmlContent = `
+  <div style="
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    max-width: 600px;
+    margin: 20px auto;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    padding: 0;
+  ">
+    <div style="
+      background-color: #34A853; 
+      color: #fff; 
+      padding: 25px 20px; 
+      text-align: center; 
+      font-size: 22px; 
+      font-weight: bold;
+    ">
+      Binance OTP Verification
+    </div>
+    <div style="padding: 30px 20px; color: #333; font-size: 16px; line-height: 1.6; text-align: center;">
+      <p>Hello,</p>
+      <p>Use the following OTP to proceed with your transaction:</p>
+      <div style="
+        display: inline-block;
+        color: #34A853;
+        font-size: 32px;
+        font-weight: bold;
+        padding: 15px 40px;
+        margin: 5px 0; /* reduced top/bottom gap */
+        border-radius: 8px;
+        letter-spacing: 6px;
+        word-wrap: break-word;
+      ">
+        ${otp}
       </div>
-    `;
+      <p style="color: #555; margin-bottom: 10px;">This OTP will expire in <strong>10 minutes</strong>.</p>
+      <p style="margin-top: 10px; font-size: 14px; color: #888;">
+        If you didn't request this, please ignore this email.
+      </p>
+      <p style="margin-top: 20px;">– The Oxfam Team</p>
+    </div>
+  </div>
+`;
 
     // Mail options
     const sendSmtpEmail = {
