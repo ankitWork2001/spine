@@ -4,6 +4,7 @@ import RewardWallet from "../models/rewardWalletModel.js";
 import Referral from "../models/referralModel.js";
 import jwt from "jsonwebtoken";
 import transporter from "../config/nodemailer.js";
+import Transaction from "../models/transactionModel.js";
 
 // 🔐 Token Generator
 const generateToken = (userId) => {
@@ -55,6 +56,13 @@ export const signup = async (req, res) => {
           commissionPercent: 10,
           isCommissionGiven: false,
         }).catch((err) => console.error("Referral creation error:", err.message));
+
+        // Transaction.create({
+        //   userId: referrer._id,
+        //   type: "credit",
+        //   amount: 10, // Referral bonus amount
+        //   reason: `Referral bonus for referring ${newUser.username}`,
+        // }).catch((err) => console.error("Referral bonus transaction error:", err.message));
       }
     }
 

@@ -3,6 +3,7 @@ import UserInvestment from "../models/userInvestmentModel.js";
 import Wallet from "../models/walletModel.js";
 import InvestmentPlan from "../models/investmentPlanModel.js";
 import Notification from "../models/notificationModel.js";
+import Transaction from "../models/transactionModel.js";
 
 // Runs daily at 12:00 AM and 12:00 PM
 cron.schedule("0 0,12 * * *", async () => {
@@ -40,6 +41,13 @@ cron.schedule("0 0,12 * * *", async () => {
           investment.earning += totalROI;
           investment.lastPayoutDate = today;
           await investment.save();
+      
+          await Transaction.create({
+            userId: investment.userId,
+            type: "bonus",
+            amount: totalROI,
+            status: "completed",
+          });
 
           // Notify user
           await Notification.create({
@@ -69,11 +77,6 @@ cron.schedule("0 0,12 * * *", async () => {
           investment.lastPayoutDate = today;
           await investment.save();
 
-          await Notification.create({
-            userId: investment.userId,
-            message: `Your investment has matured. Principal $${investment.amount} has been credited. ROI was already paid daily.`,
-          });
-
           console.log(
             `✅ Auto plan completed: Returned principal for user ${investment.userId}`
           );
@@ -89,6 +92,14 @@ cron.schedule("0 0,12 * * *", async () => {
           investment.status = "completed";
           investment.lastPayoutDate = today;
           await investment.save();
+
+          await Transaction.create({
+            userId: investment.userId,
+            type: "bonus",
+            amount: finalROI,
+            status: "completed",
+          });
+
 
           await Notification.create({
             userId: investment.userId,

@@ -1,6 +1,7 @@
 import Referral from "../models/referralModel.js";
 import ReferralTransaction from "../models/referralTransactionModel.js";
 import RewardWallet from "../models/rewardWalletModel.js";
+import Transaction from "../models/transactionModel.js";
 
 export const COMMISSION_LEVELS = [10, 5, 3];
 
@@ -59,6 +60,13 @@ export const distributeReferralCommission = async (userId, investmentAmount, inv
         investmentId,
         amount: commissionAmount,
         level: level + 1,
+      });
+
+      await Transaction.create({
+        userId: referrerId,
+        type: "bonus",
+        amount: commissionAmount,
+        status: "completed",
       });
 
       // ✅ Only mark direct referral (level 1) as commission given

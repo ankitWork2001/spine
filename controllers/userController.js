@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import Wallet from "../models/walletModel.js";
 import RewardWallet from "../models/rewardWalletModel.js";
@@ -330,3 +331,59 @@ export const resetPassword = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+export const getTodayEarnings = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    // Full day range: 12:00 AM to 11:59:59 PM
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const todayEarningAgg = await Transaction.aggregate([
+      {
+        $match: {
+          userId: userId,
+          type: { $in: ["bonus"] },
+          status: "completed",
+          createdAt: { $gte: startOfToday, $lte: endOfToday },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalEarning: { $sum: "$amount" },
+        },
+      },
+    ]);
+
+    const todayEarnings = todayEarningAgg[0]?.totalEarning || 0;
+
+    res.status(200).json({
+      todayEarnings
+    });
+  } catch (error) {
+    console.error("Error in getTodayEarnings:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const getAllTransactions = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const transactions = await Transaction.find({ userId }).sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      message: "All transactions fetched",
+      data: transactions,
+    });
+  } catch (error) {
+    console.error("Error in getAllTransactions:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+

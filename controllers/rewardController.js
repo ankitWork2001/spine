@@ -24,7 +24,7 @@ export const getRewardWallet = async (req, res) => {
     );
 
     const referralTransations = wallet.transactions.filter(
-      (tx) => tx.reason === "Referral commission"
+      (tx) => tx.reason === "Referral commission" || tx.reason === "Referral Level 1 commission" || tx.reason === "Referral Level 2 commission" || tx.reason === "Referral Level 3 commission"
     );
 
     const totalSpinReward = spinTransactions.reduce((sum, tx) => sum + tx.amount, 0);
