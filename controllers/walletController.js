@@ -34,7 +34,7 @@ export const getTransactions = async (req, res) => {
 export const depositFunds = async (req, res) => {
   try {
     const userId = req.userId;
-    const { amount } = req.body;
+    const { amount, walletAddress } = req.body;
 
     const user = await User.findById(userId).select("address");
 
@@ -55,7 +55,7 @@ export const depositFunds = async (req, res) => {
       type: "deposit",
       amount,
       status: "pending",
-      address: user?.address || null
+      address: walletAddress || null
     });
 
     res.status(200).json({
@@ -73,7 +73,7 @@ export const depositFunds = async (req, res) => {
 export const withdrawFunds = async (req, res) => {
   try {
     const userId = req.userId;
-    const { amount } = req.body;
+    const { amount, walletAddress } = req.body;
 
     const user = await User.findById(userId).select("address");
 
@@ -114,7 +114,7 @@ export const withdrawFunds = async (req, res) => {
       type: "withdrawal",
       amount,
       status: "pending",
-      address: user?.address || null
+      address: walletAddress || null
     });
 
     res.status(200).json({

@@ -10,15 +10,12 @@ const upiVerificationSchema = new mongoose.Schema({
   },
   upiId: {
     type: String,
-    required: true,
   },
   otp: {
     type: String,
-    required: true,
   },
   otpExpiresAt: {
     type: Date,
-    required: true,
   },
   isVerified: {
     type: Boolean,
