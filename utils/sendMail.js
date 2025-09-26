@@ -17,7 +17,7 @@ const sendEmail = async (to, subject, otp) => {
     // Email content
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; background-color: #f9f9f9;">
-        <h2>Hello from <span style="color:#007BFF;">Winz</span> 👋</h2>
+        <h2>Hello from <span style="color:#007BFF;">Oxfam</span> 👋</h2>
         <p>Use the following OTP to proceed:</p>
         <h1 style="color:#007BFF;">${otp}</h1>
         <p>This OTP will expire in 10 minutes.</p>
@@ -26,7 +26,7 @@ const sendEmail = async (to, subject, otp) => {
 
     // Mail options
     const sendSmtpEmail = {
-      sender: { email: process.env.SENDER_EMAIL, name: "Winz" },
+      sender: { email: process.env.SENDER_EMAIL, name: "Oxfam" },
       to: [{ email: to }],
       subject,
       textContent: `Your OTP is ${otp}. It will expire in 10 minutes.`,

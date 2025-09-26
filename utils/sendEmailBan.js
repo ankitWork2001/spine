@@ -1,48 +1,3 @@
-// import nodemailer from "nodemailer";
-
-// const sendEmailBan = async (to, userId) => {
-//  try {
-//      const transporter = nodemailer.createTransport({
-//        host: "smtp-relay.brevo.com",
-//        port: 587,
-//        secure: false,
-//        auth: {
-//          user: process.env.EMAIL_USER,
-//          pass: process.env.EMAIL_PASS,
-//        },
-//      });
-
-//     const htmlContent = `
-//       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; background-color: #f9f9f9;">
-//         <h2 style="color: #d9534f;">🚫 Account Banned</h2>
-//         <p>Dear User,</p>
-//         <p>Your account has been <b style="color: red;">banned</b> by the administrator.</p>
-//         <p><b>User ID:</b> ${userId}</p>
-//         <p><b>Email:</b> ${to}</p>
-//         <hr />
-//         <p>If you believe this is a mistake, please contact support.</p>
-//         <p>– The Winz Team</p>
-//       </div>
-//     `;
-
-//     const mailOptions = {
-//       from: `"Winz" <${process.env.SENDER_EMAIL}>`,
-//       to,
-//       subject: "🚫 Your Winz Account Has Been Banned",
-//       html: htmlContent,
-//       replyTo: "support@winz.com",
-//     };
-
-//     const info = await transporter.sendMail(mailOptions);
-//     console.log("✅ Ban email sent:", info.response);
-//   } catch (error) {
-//     console.error("❌ Error sending ban email:", error);
-//     throw new Error("Failed to send ban email");
-//   }
-// };
-
-// export default sendEmailBan;
-
 import SibApiV3Sdk from "sib-api-v3-sdk";
 
 const sendEmailBan = async (to, userId) => {
@@ -54,22 +9,43 @@ const sendEmailBan = async (to, userId) => {
     const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
     const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; background-color: #f9f9f9;">
-        <h2 style="color: #d9534f;">🚫 Account Banned</h2>
-        <p>Dear User,</p>
-        <p>Your account has been <b style="color: red;">banned</b> by the administrator.</p>
-        <p><b>User ID:</b> ${userId}</p>
-        <p><b>Email:</b> ${to}</p>
-        <hr />
-        <p>If you believe this is a mistake, please contact support.</p>
-        <p>– The Winz Team</p>
-      </div>
-    `;
+  <div style="
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 600px; 
+    margin: 40px auto; 
+    border-radius: 10px; 
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+  ">
+    <div style="
+      background-color: #d9534f; 
+      color: #fff; 
+      padding: 20px; 
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+    ">
+      🚫 Account Banned
+    </div>
+    <div style="padding: 30px; color: #333; font-size: 16px; line-height: 1.6;">
+      <p>Dear User,</p>
+      <p>Your account has been <strong style="color: #d9534f;">banned</strong> by the administrator.</p>
+      <p><strong>User ID:</strong> ${userId}</p>
+      <p><strong>Email:</strong> ${to}</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+      <p>If you believe this is a mistake, please contact our support team.</p>
+      <p style="margin-top: 30px;">– The Oxfam Team</p>
+    </div>
+  </div>
+`;
+
 
     const sendSmtpEmail = {
-      sender: { email: process.env.SENDER_EMAIL, name: "Winz" },
+      sender: { email: process.env.SENDER_EMAIL, name: "Oxfam" },
       to: [{ email: to }],
-      subject: "🚫 Your Winz Account Has Been Banned",
+      subject: "🚫 Your Oxfam Account Has Been Banned",
       htmlContent,
     };
 
