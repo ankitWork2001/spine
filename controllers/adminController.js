@@ -154,14 +154,14 @@ export const getDashboardStats = async (req, res) => {
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
     const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-    // ✅ Total stats
+    // ✅ Total Stats
     const totalUsers = await User.countDocuments();
     const totalReferrals = await Referral.countDocuments();
 
+    // ✅ Total deposits & withdrawals
+    const transactions = await Transaction.find();
     let totalDeposits = 0;
     let totalWithdrawals = 0;
-
-    const transactions = await Transaction.find();
 
     transactions.forEach((transaction) => {
       if (transaction.type === "deposit") {
@@ -171,11 +171,17 @@ export const getDashboardStats = async (req, res) => {
       }
     });
 
-    // ✅ Today's stats
+    // ✅ Today's users
     const todayUsers = await User.countDocuments({
       createdAt: { $gte: startOfDay, $lte: endOfDay },
     });
 
+    // ✅ Today's referrals
+    const todayReferrals = await Referral.countDocuments({
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    // ✅ Today's deposits
     const todayDepositsAgg = await Transaction.aggregate([
       {
         $match: {
@@ -186,6 +192,9 @@ export const getDashboardStats = async (req, res) => {
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
 
+    const todayDeposits = todayDepositsAgg[0]?.total || 0;
+
+    // ✅ Today's withdrawals
     const todayWithdrawalsAgg = await Transaction.aggregate([
       {
         $match: {
@@ -196,9 +205,9 @@ export const getDashboardStats = async (req, res) => {
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
 
-    const todayDeposits = todayDepositsAgg[0]?.total || 0;
     const todayWithdrawals = todayWithdrawalsAgg[0]?.total || 0;
 
+    // ✅ Final response
     res.status(200).json({
       success: true,
       stats: {
@@ -207,6 +216,7 @@ export const getDashboardStats = async (req, res) => {
         totalDeposits,
         totalWithdrawals,
         todayUsers,
+        todayReferrals,
         todayDeposits,
         todayWithdrawals,
       },
@@ -215,7 +225,6 @@ export const getDashboardStats = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 // Ban or activate user
 export const toggleUserStatus = async (req, res) => {
