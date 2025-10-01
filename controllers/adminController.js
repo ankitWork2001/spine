@@ -116,8 +116,45 @@ export const getUser = async (req, res) => {
   }
 };
 
+// export const getDashboardStats = async (req, res) => {
+//   try {
+//     const totalUsers = await User.countDocuments();
+//     const totalReferrals = await Referral.countDocuments();
+
+//     let totalDeposits = 0;
+//     let totalWithdrawals = 0;
+
+//     const transactions = await Transaction.find();
+
+//     transactions.forEach((transaction) => {
+//       if (transaction.type === "deposit") {
+//         totalDeposits += transaction.amount;
+//       } else if (transaction.type === "withdrawal") {
+//         totalWithdrawals += transaction.amount;
+//       }
+//     });
+
+//     res.status(200).json({
+//       success: true,
+//       stats: {
+//         totalUsers,
+//         totalReferrals,
+//         totalDeposits,
+//         totalWithdrawals,
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
 export const getDashboardStats = async (req, res) => {
   try {
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    // ✅ Total stats
     const totalUsers = await User.countDocuments();
     const totalReferrals = await Referral.countDocuments();
 
@@ -134,6 +171,34 @@ export const getDashboardStats = async (req, res) => {
       }
     });
 
+    // ✅ Today's stats
+    const todayUsers = await User.countDocuments({
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    const todayDepositsAgg = await Transaction.aggregate([
+      {
+        $match: {
+          type: "deposit",
+          createdAt: { $gte: startOfDay, $lte: endOfDay },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+
+    const todayWithdrawalsAgg = await Transaction.aggregate([
+      {
+        $match: {
+          type: "withdrawal",
+          createdAt: { $gte: startOfDay, $lte: endOfDay },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+
+    const todayDeposits = todayDepositsAgg[0]?.total || 0;
+    const todayWithdrawals = todayWithdrawalsAgg[0]?.total || 0;
+
     res.status(200).json({
       success: true,
       stats: {
@@ -141,12 +206,16 @@ export const getDashboardStats = async (req, res) => {
         totalReferrals,
         totalDeposits,
         totalWithdrawals,
+        todayUsers,
+        todayDeposits,
+        todayWithdrawals,
       },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 // Ban or activate user
 export const toggleUserStatus = async (req, res) => {

@@ -3,11 +3,11 @@ import SibApiV3Sdk from "sib-api-v3-sdk";
 const sendEmailBan = async (to, userId) => {
   try {
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
+    const apiKey = defaultClient.authentications["api-key"];
     apiKey.apiKey = process.env.BREVO_API_KEY;
 
     const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
-    
+
     const htmlContent = `
   <div style="
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -41,7 +41,6 @@ const sendEmailBan = async (to, userId) => {
   </div>
 `;
 
-
     const sendSmtpEmail = {
       sender: { email: process.env.SENDER_EMAIL, name: "Oxfam" },
       to: [{ email: to }],
@@ -58,4 +57,3 @@ const sendEmailBan = async (to, userId) => {
 };
 
 export default sendEmailBan;
-
