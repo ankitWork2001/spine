@@ -116,38 +116,6 @@ export const getUser = async (req, res) => {
   }
 };
 
-// export const getDashboardStats = async (req, res) => {
-//   try {
-//     const totalUsers = await User.countDocuments();
-//     const totalReferrals = await Referral.countDocuments();
-
-//     let totalDeposits = 0;
-//     let totalWithdrawals = 0;
-
-//     const transactions = await Transaction.find();
-
-//     transactions.forEach((transaction) => {
-//       if (transaction.type === "deposit") {
-//         totalDeposits += transaction.amount;
-//       } else if (transaction.type === "withdrawal") {
-//         totalWithdrawals += transaction.amount;
-//       }
-//     });
-
-//     res.status(200).json({
-//       success: true,
-//       stats: {
-//         totalUsers,
-//         totalReferrals,
-//         totalDeposits,
-//         totalWithdrawals,
-//       },
-//     });
-//   } catch (error) {
-//     res.status(500).json({ success: false, error: error.message });
-//   }
-// };
-
 export const getDashboardStats = async (req, res) => {
   try {
     const today = new Date();
