@@ -4,7 +4,7 @@ import Wallet from "../models/walletModel.js";
 import RewardWallet from "../models/rewardWalletModel.js";
 import ReferralTransaction from "../models/referralTransactionModel.js";
 import Transaction from "../models/transactionModel.js";
-import transporter from "../config/nodemailer.js";
+import sendEmail from "../utils/sendMail.js";
 
 
 // 🟢 Get Reward Wallet Transactions
@@ -246,10 +246,8 @@ export const getUserDashboardSummary = async (req, res) => {
 
 
 // sentOtp in Email
-
 export const sendOtp = async(req,res)=>{
   const { email } = req.body;
-
   try {
     const user = await User.findOne({ email });
 
@@ -260,32 +258,9 @@ export const sendOtp = async(req,res)=>{
 
     user.otp = otp;
    user.otpExprieAt= Date.now() + 15 * 60 * 1000;
-
    await user.save();
 
-    const OptionMail =  {
-    from: process.env.SENDER_EMAIL,
-    to: user.email,
-    subject: "🔐 Your OTP Code for Verification",
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9;">
-        <h2 style="text-align: center; color: #333;">Verification Code</h2>
-        <p>Hi <strong>${user.name || "User"}</strong>,</p>
-        <p>We received a request to verify your email. Please use the OTP below to complete the process:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <span style="display: inline-block; font-size: 32px; letter-spacing: 8px; background: #fff; padding: 10px 20px; border: 2px dashed #007BFF; border-radius: 6px; color: #007BFF;">
-            ${otp}
-          </span>
-        </div>
-        <p>This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.</p>
-        <p>If you did not request this, please ignore this email.</p>
-        <p style="margin-top: 40px;">Thanks & Regards,<br/>The Team</p>
-        <hr style="margin-top: 30px;" />
-        <p style="font-size: 12px; color: #777;">This is an automated message. Please do not reply.</p>
-      </div>
-    `
-};
-  await transporter.sendMail(OptionMail)
+    await sendEmail(user.email, "🔐 Your OTP Code for Verification", otp);
 
     res.json({
       success:true,
@@ -294,9 +269,10 @@ export const sendOtp = async(req,res)=>{
     })
 
   } catch (error) {
-    
+    console.error("Error in sendOtp:", error);
+    res.json({ success: false, message: error.message });
   }
-}
+};
 
 // resetPassword
 export const resetPassword = async (req, res) => {
