@@ -24,7 +24,7 @@ router.post("/avatar", authenticate, checkUserStatus,  uploadAvatar);
 router.get("/reward-wallet", authenticate, checkUserStatus, getRewardWalletTransactions);
 router.post("/withdraw", authenticate, checkUserStatus, withdrawFromWallet);
 router.post("/otp", sendOtp);
-router.post("/resetPass",checkUserStatus, resetPassword);
+router.post("/resetPass", resetPassword);
 router.get("/transactions/get", authenticate, checkUserStatus, getAllTransactions);
 
 
