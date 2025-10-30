@@ -4,7 +4,7 @@ export const checkUserStatus = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: "User Is Banned" });
+      return res.status(404).json({ success: false, message: "User Not Exist" });
     }
 
     if (user.status === "banned") {

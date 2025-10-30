@@ -248,8 +248,6 @@ export const getUserDashboardSummary = async (req, res) => {
 // sentOtp in Email
 
 export const sendOtp = async(req,res)=>{
-   
-
   const { email } = req.body;
 
   try {
