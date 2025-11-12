@@ -9,7 +9,8 @@ import {
   sendOtp,
   resetPassword,
   getTodayEarnings,
-  getAllTransactions
+  getAllTransactions,
+  changePassword
 } from "../controllers/userController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 import { checkUserStatus } from "../middleware/checkuserstatus.js";
@@ -27,6 +28,6 @@ router.post("/otp", sendOtp);
 router.post("/resetPass", resetPassword);
 router.get("/transactions/get", authenticate, checkUserStatus, getAllTransactions);
 
-
+router.post("/change-password", authenticate, checkUserStatus, changePassword);
 
 export default router;

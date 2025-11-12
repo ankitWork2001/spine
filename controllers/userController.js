@@ -334,7 +334,7 @@ export const getTodayEarnings = async (req, res) => {
       },
     ]);
 
-    const todayEarnings = todayEarningAgg[0]?.totalEarning || 0;
+    const todayEarnings = Number((todayEarningAgg[0]?.totalEarning || 0).toFixed(2));
 
     res.status(200).json({
       todayEarnings
@@ -356,6 +356,32 @@ export const getAllTransactions = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getAllTransactions:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.userId;
+
+    const user = await User.findById(userId).select("+password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const isMatch = await user.matchPassword(oldPassword);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Old password is incorrect" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({ success: true, message: "Password reset successful" });
+
+  } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
