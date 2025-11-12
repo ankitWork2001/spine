@@ -87,12 +87,12 @@ export const playSpin2 = async (req, res) => {
     }
 
     // 🔹 Daily limit check
-    // if (user.dailySpinCount >= 5) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Daily 5 spins limit reached.\nNew spins available at 12:00 AM IST.",
-    //   });
-    // }
+    if (user.dailySpinCount >= 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Daily 5 spins limit reached.\nNew spins available at 12:00 AM IST.",
+      });
+    }
 
     // 🔹 Spin balance check
     if (user.spinCount <= 0) {
